@@ -123,6 +123,7 @@ function demoSong(){
 }
 
 function buildSteps(){
+  logSession(false); // laufende Übung noch mit alter Hand und alter Schrittzahl speichern
   const hand=$('#hand').value,simp=$('#simp').checked;
   let ns=songNotes.filter(n=>hand==='R'?n.p>=SPLIT:hand==='L'?n.p<SPLIT:true);
   steps=[];
@@ -138,30 +139,35 @@ function buildSteps(){
   while(hi-lo<35){if(lo>=24)lo-=12;if(hi-lo<35)hi+=12;}
   layout();restart();
 }
-function restart(){if(playing||hits>=3)logSession(false);kbBase=-100;idx=0;pos=steps.length?Math.max(0,steps[0].t-1.5):0;got=new Set();hits=0;misses=0;lastPitches=new Set();playing=false;$('#play').textContent='Start';updStatus();}
+function restart(){if(playing||hits>=3)logSession(false);kbBase=-100;idx=0;pos=steps.length?Math.max(0,steps[0].t-1.5):0;got=new Set();hits=0;misses=0;secs=0;sessHand=$('#hand').value;sessSpd=+$('#spd').value;lastPitches=new Set();playing=false;$('#play').textContent='Start';updStatus();}
 
 
 /* ---------- Fortschritt (bleibt lokal auf dem Gerät) ---------- */
 const LOGKEY='pt_log';
-const getLog=()=>{try{return JSON.parse(localStorage.getItem(LOGKEY)||'[]');}catch(e){return [];}};
+let sessHand='R',sessSpd=60; // Hand und langsamstes Tempo der laufenden Übung
+const getLog=()=>{try{const l=JSON.parse(localStorage.getItem(LOGKEY)||'[]');return Array.isArray(l)?l:[];}catch(e){return [];}};
 function logSession(finished){
   if(hits<3)return;
   const l=getLog();
-  l.push({d:new Date().toISOString(),song:songName,hand:$('#hand').value,spd:+$('#spd').value,hits,misses,steps:steps.length,fin:!!finished,sec:Math.round(secs)});
-  localStorage.setItem(LOGKEY,JSON.stringify(l.slice(-500)));hits=0;misses=0;secs=0;
+  l.push({d:new Date().toISOString(),song:songName,hand:sessHand,spd:sessSpd,hits,misses,steps:steps.length,fin:!!finished,sec:Math.round(secs)});
+  try{localStorage.setItem(LOGKEY,JSON.stringify(l.slice(-500)));}catch(e){} // Speicher voll/gesperrt: Üben geht trotzdem weiter
+  hits=0;misses=0;secs=0;
 }
-function day(d){return d.slice(0,10);}
+// Lokales Datum statt UTC, sonst zählt Üben nach Mitternacht (MEZ) noch zum Vortag
+const ymd=t=>t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+function day(d){return ymd(new Date(d));}
 function showProgress(){
   const l=getLog(),el=$('#progress');
   if(!l.length){el.textContent='Noch keine Übungen gespeichert. Spiel ein Stück bis zum Ende oder tippe „Von vorn“.';return;}
   const days=[...new Set(l.map(x=>day(x.d)))].sort();
-  const dk=n=>new Date(Date.now()-n*864e5).toISOString().slice(0,10);
+  const dk=n=>{const t=new Date();t.setDate(t.getDate()-n);return ymd(t);};
   let streak=0,off=days.includes(dk(0))?0:1;
   while(days.includes(dk(off+streak)))streak++;
-  const today=day(new Date().toISOString()),mins=Math.round(l.filter(x=>day(x.d)===today).reduce((a,x)=>a+x.sec,0)/60);
+  const today=dk(0),mins=Math.round(l.filter(x=>day(x.d)===today).reduce((a,x)=>a+x.sec,0)/60);
   const by={};l.forEach(x=>{(by[x.song]=by[x.song]||[]).push(x);});
   let out='Heute: '+mins+' Min · Serie: '+streak+' Tag(e) · Übungstage gesamt: '+days.length+'\n';
-  Object.keys(by).slice(-6).forEach(k=>{const a=by[k],fin=a.filter(x=>x.fin),acc=x=>Math.round(100*x.hits/Math.max(1,x.hits+x.misses));
+  // die 6 zuletzt geübten Stücke, nicht die 6 zuletzt neu hinzugekommenen
+  Object.keys(by).sort((a,b)=>by[a][by[a].length-1].d<by[b][by[b].length-1].d?-1:1).slice(-6).forEach(k=>{const a=by[k],fin=a.filter(x=>x.fin),acc=x=>Math.round(100*x.hits/Math.max(1,x.hits+x.misses));
     const last=a[a.length-1],best=fin.length?Math.max(...fin.map(x=>x.spd)):0;
     out+='\n'+k+'\n  '+a.length+'× geübt · zuletzt '+acc(last)+' % bei '+last.spd+' % Tempo'+(fin.length?' · schnellster Durchlauf '+best+' %':' · noch nie fertig')+'\n';});
   el.textContent=out;
@@ -196,21 +202,33 @@ function kbLabel(off){const c=KB.find(k=>k[1]===off)[0];
   if(c==='Semicolon')return DE?'Ö':';';if(c==='Quote')return DE?'Ä':"'";if(c==='KeyY')return DE?'Z':'Y';return c.slice(3);}
 function followWindow(){
   if(idx>=steps.length)return;
-  const cur=steps[idx].notes.map(n=>n.p);
-  if(cur.every(p=>p>=kbBase&&p<=kbBase+KBSPAN))return;
-  let ps=cur.slice();for(let i=1;i<=3&&idx+i<steps.length;i++)ps.push(...steps[idx+i].notes.map(n=>n.p));
-  let b=Math.floor(Math.min(...ps)/12)*12;
-  if(Math.max(...ps)>b+KBSPAN)b=Math.floor(Math.min(...cur)/12)*12;
-  kbBase=b;
+  const cur=steps[idx].notes.map(n=>n.p),inWin=(b,p)=>p>=b&&p<=b+KBSPAN;
+  if(!cur.every(p=>inWin(kbBase,p))){
+    let ps=cur.slice();for(let i=1;i<=3&&idx+i<steps.length;i++)ps.push(...steps[idx+i].notes.map(n=>n.p));
+    // Fenster beginnt immer auf einem C. Bestes Fenster: deckt möglichst alle aktuellen Noten ab,
+    // dann möglichst viele der nächsten; bei Gleichstand das um die tiefste aktuelle Note.
+    const cnt=(b,a)=>a.filter(p=>inWin(b,p)).length,b0=Math.floor(Math.min(...cur)/12)*12;
+    let best=b0,sc=-1;
+    for(const b of [b0,b0-12,...[1,2,3,4,5,6,7,8,9,10].map(k=>b0+12*k).filter(b=>b<=Math.max(...cur))]){
+      const v=cnt(b,cur)*1000+cnt(b,ps);if(v>sc){sc=v;best=b;}
+    }
+    kbBase=best;
+  }
+  // Akkord passt in kein 18-Tasten-Fenster (z. B. beide Hände weit auseinander): die Noten
+  // außerhalb gelten als erledigt, sonst hängt der Wait-Modus hier für immer
+  for(const p of cur)if(!inWin(kbBase,p))got.add(p);
 }
 window.addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT'||e.metaKey||e.ctrlKey||e.altKey)return;
-  if(e.code==='Space'){e.preventDefault();$('#play').click();return;}
+  if((e.target.tagName==='INPUT'&&e.target.type==='text')||e.metaKey||e.ctrlKey||e.altKey)return;
+  // Fokus von Knopf/Regler nehmen, sonst löst Space den fokussierten Knopf zusätzlich aus
+  // bzw. Regler und Checkbox schlucken die Klaviertasten
+  const own=()=>{e.preventDefault();if(e.target!==document.body&&e.target.blur)e.target.blur();};
+  if(e.code==='Space'){own();$('#play').click();return;}
   if(inpMode!=='keys')return;
-  if(e.code==='ArrowLeft'){kbBase-=12;e.preventDefault();return;}
-  if(e.code==='ArrowRight'){kbBase+=12;e.preventDefault();return;}
-  if(e.repeat||!(e.code in KBMAP))return;
-  e.preventDefault();const p=kbBase+KBMAP[e.code];tone(p);press(p);
+  if(e.code==='ArrowLeft'){kbBase-=12;own();return;}
+  if(e.code==='ArrowRight'){kbBase+=12;own();return;}
+  if(!(e.code in KBMAP))return;
+  own();if(e.repeat)return;const p=kbBase+KBMAP[e.code];tone(p);press(p);
 });
 
 /* MIDI */
@@ -228,38 +246,54 @@ async function initMidi(){
 
 /* Audio + Mikro */
 let ac=null,an=null,fbuf=null,micOn=false,hist={};
-function ctx(){if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();return ac;}
+let toneUntil=0;
+// iPhone-Safari meldet nach Unterbrechungen (Anruf, App-Wechsel) 'interrupted' statt 'suspended'
+function ctx(){if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();if(ac.state!=='running')ac.resume().catch(()=>{});return ac;}
 function tone(p,dur=0.6){const c=ctx(),o=c.createOscillator(),g=c.createGain();
+  toneUntil=performance.now()+(dur+0.15)*1000; // eigener Ton soll das Mikro nicht auslösen
   o.type='triangle';o.frequency.value=440*Math.pow(2,(p-69)/12);
   g.gain.setValueAtTime(0.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(0.35,c.currentTime+0.01);
   g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+dur+0.05);}
 async function initMic(){
+  if(micOn)return 'Mikrofon an. Spiel laut genug, Handy nah ans Piano.';
   try{
+    const c=ctx(); // noch innerhalb der Nutzergeste anlegen, sonst bleibt er auf dem iPhone stumm
     const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    const c=ctx();an=c.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0;
+    an=c.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0;
     c.createMediaStreamSource(st).connect(an);fbuf=new Float32Array(an.frequencyBinCount);micOn=true;
     return 'Mikrofon an. Spiel laut genug, Handy nah ans Piano.';
   }catch(e){return 'Kein Mikrofonzugriff: '+e.message;}
 }
 function lvlAt(f){
-  const bh=ac.sampleRate/an.fftSize,b=Math.round(f/bh);let m=-200;
-  for(let i=b-1;i<=b+1;i++)m=Math.max(m,fbuf[i]);
-  let s=0,c=0;for(const i of [b-9,b-8,b-7,b+7,b+8,b+9])if(i>0&&i<fbuf.length){s+=fbuf[i];c++;}
+  // -Infinity (digitale Stille) begrenzen, sonst ergibt Spitze minus Umgebung +Infinity oder NaN
+  const v=i=>Math.max(-160,fbuf[i]);
+  const bh=ac.sampleRate/an.fftSize,b=Math.round(f/bh);let m=-160;
+  for(let i=b-1;i<=b+1;i++)m=Math.max(m,v(i));
+  let s=0,c=0;for(const i of [b-9,b-8,b-7,b+7,b+8,b+9])if(i>0&&i<fbuf.length){s+=v(i);c++;}
   return m-s/c;
 }
 function micScan(now){
-  if(!micOn||!playing||idx>=steps.length)return;
+  if(!micOn||inpMode!=='mic')return;
   an.getFloatFrequencyData(fbuf);
+  // Pegelverlauf der letzten 250 ms für alle Tasten, unabhängig von Bildrate und Pausen,
+  // damit ein Anschlag auch dann erkannt wird, wenn die Note gerade erst an die Reihe kommt.
+  for(let p=lo;p<=hi;p++){
+    const f=440*Math.pow(2,(p-69)/12);
+    // Tiefe Töne nimmt das Handy kaum auf: dann 2. und 3. Teilton, beide müssen da sein
+    // (sonst löst schon die Oktave darüber aus)
+    let l=lvlAt(f);if(p<50)l=Math.max(l,Math.min(lvlAt(f*2),lvlAt(f*3))-3);
+    const h=hist[p]=hist[p]||[];h.push({t:now,l});while(now-h[0].t>250)h.shift();
+  }
+  if(!playing||idx>=steps.length||now<toneUntil)return;
   const s=steps[idx];if(s.t-pos>0.5*speed())return;
   for(const n of s.notes){
-    const p=n.p,f=440*Math.pow(2,(p-69)/12);
-    let l=lvlAt(f);if(p<50)l=Math.max(l,lvlAt(f*2)-3);
-    const h=hist[p]=hist[p]||[];h.push(l);if(h.length>10)h.shift();
-    const present=l>14;
-    const onset=present&&(l-Math.min(...h))>6;
-    const mustOnset=lastPitches.has(p);
-    if(now<lockUntil&&mustOnset)continue;
-    if(present&&(!mustOnset||onset))press(p,now);
+    const p=n.p,h=hist[p];if(!h)continue;
+    // Nur ein frischer Anschlag zählt: nachklingende Töne, ihre Obertöne und gehaltene Bässe nicht
+    const l=h[h.length-1].l,onset=l>14&&l-Math.min(...h.map(x=>x.l))>6;
+    // Kurz nach einem Treffer: gleiche Taste und deren Obertöne (Oktave, Duodezime, Doppeloktave) sperren
+    if(now<lockUntil&&[...lastPitches].some(q=>[0,12,19,24].includes(p-q)))continue;
+    if(onset)press(p,now);
+    if(steps[idx]!==s)break;
   }
 }
 
@@ -364,9 +398,11 @@ $('#play').onclick=async()=>{ctx();
 $('#restart').onclick=restart;
 $('#prog').onclick=()=>{const e=$('#progress');if(e.style.display==='none'){showProgress();e.style.display='block';$('#panel').classList.remove('hide');}else e.style.display='none';};
 window.addEventListener('pagehide',()=>logSession(false));
+// Als iPhone-App (Home-Bildschirm) kommt beim Wegwischen oft kein pagehide mehr, nur visibilitychange
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')logSession(false);});
 $('#toggle').onclick=()=>$('#panel').classList.toggle('hide');
 $('#hand').onchange=buildSteps;$('#simp').onchange=buildSteps;
-$('#spd').oninput=()=>$('#spdv').textContent=$('#spd').value+'%';
+$('#spd').oninput=()=>{const v=+$('#spd').value;$('#spdv').textContent=v+'%';sessSpd=hits||misses?Math.min(sessSpd,v):v;};
 $('#hear').onclick=()=>{ctx();if(idx<steps.length)steps[idx].notes.forEach(n=>tone(n.p));};
 $('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{setSong(parseMidi(await f.arrayBuffer()),f.name.replace(/\.midi?$/i,''));$('#panel').classList.add('hide');}catch(x){setMsg(x.message);}};
 $('#inp').onchange=async()=>{const v=$('#inp').value;inpMode=v;if(v==='keys')setMsg('Tastatur: untere Reihe = weiße Tasten, obere Reihe = schwarze. Das Fenster folgt dem Song, ←/→ verschiebt es. Space = Start/Pause.');if(v==='midi')setMsg(await initMidi());if(v==='mic')setMsg(await initMic());if(v==='touch')setMsg('Nur Touch: auf die Tasten tippen.');};
