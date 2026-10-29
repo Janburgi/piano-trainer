@@ -1,0 +1,16 @@
+{
+  "name": "Piano Trainer",
+  "short_name": "Piano",
+  "description": "Klavier lernen mit fallenden Noten, per E-Piano, Mikrofon oder Touch.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#19130F",
+  "theme_color": "#19130F",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

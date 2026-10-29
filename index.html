@@ -4,59 +4,186 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Piano">
-<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#19130F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600&display=swap" rel="stylesheet">
 <title>Piano Trainer</title>
 <style>
+/* Materialien eines Flügels: Nussbaum-Lack, Elfenbein, Ebenholz, Messing, roter Filz über den Tasten */
+:root{
+  --lack:#19130F;--lack2:#231B16;--fuge:#3A2E25;--elfenbein:#F2EBDD;--ebenholz:#15110E;
+  --filz:#9E2B25;--messing:#C9A35A;--text:#EDE6D8;--leise:#A89A88;--ok:#6FCF8E;--err:#E2553F;
+  --font:'Instrument Sans',-apple-system,system-ui,sans-serif;
+}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:#0A0A0A;color:#F5F5F5;font:14px -apple-system,system-ui,sans-serif;-webkit-user-select:none;user-select:none}
-body{display:flex;flex-direction:column;height:100dvh}
-#panel{padding:10px 12px;background:#141414;border-bottom:1px solid #2a2a2a;max-height:46vh;overflow:auto}
-#panel.hide .more{display:none}
-.row{display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap}
-input[type=text]{flex:1;min-width:120px;padding:9px 10px;border-radius:8px;border:1px solid #333;background:#0A0A0A;color:#F5F5F5;font-size:16px}
-button,select{padding:9px 12px;border-radius:8px;border:1px solid #333;background:#222;color:#F5F5F5;font-size:14px}
-button.main{background:#C2A985;color:#0A0A0A;border-color:#C2A985;font-weight:600}
-#results div{padding:9px 6px;border-bottom:1px solid #222}
-#results div:active{background:#222}
-#progress{margin-top:8px;font-size:13px;line-height:1.5;color:#cfcfcf;white-space:pre-wrap}
-#status{color:#9a9a9a;font-size:13px;min-height:18px}
-label{display:flex;gap:6px;align-items:center;color:#cfcfcf}
-input[type=range]{width:120px}
-canvas{flex:1;width:100%;min-height:0;touch-action:none;display:block}
+html,body{margin:0;height:100%;background:var(--lack);color:var(--text);font:15px/1.4 var(--font);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button,.btn,select{font:15px var(--font);color:var(--text);background:var(--lack);border:1px solid var(--fuge);border-radius:12px;padding:10px 14px;cursor:pointer}
+button:active,.btn:active{filter:brightness(1.15)}
+:focus-visible{outline:2px solid var(--messing);outline-offset:2px}
+
+#bar{display:flex;align-items:center;gap:6px;padding:8px 10px;min-height:56px}
+#songsBtn{display:flex;align-items:center;gap:10px;flex:1;min-width:0;background:none;border:0;padding:6px 8px;text-align:left}
+#songsBtn .t{display:flex;flex-direction:column;min-width:0}
+#title{font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#songsBtn small{color:var(--leise);font-size:12px}
+.icon{width:42px;height:42px;padding:0;display:grid;place-items:center;background:var(--lack2)}
+#play{height:42px;padding:0 18px 0 14px;display:flex;align-items:center;gap:6px;background:var(--messing);color:var(--ebenholz);border:0;border-radius:21px;font-weight:600}
+#meter{height:3px;background:var(--lack2);flex:none}
+#fill{height:100%;width:0;background:var(--messing);transition:width .25s}
+
+#stage{position:relative;flex:1;min-height:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
+#stats{position:absolute;top:10px;left:12px;display:flex;gap:14px;font-size:13px;color:var(--leise);font-variant-numeric:tabular-nums;pointer-events:none}
+#stats b{color:var(--text);font-weight:600}
+#okTxt{color:var(--ok)}#errTxt{color:var(--err)}
+#rotate{position:absolute;top:40px;left:12px;right:12px;display:flex;align-items:center;gap:10px;background:rgba(35,27,22,.95);border:1px solid var(--fuge);border-radius:14px;padding:10px 10px 10px 14px;font-size:14px}
+#rotate[hidden]{display:none}
+#rotate span{flex:1}
+#rotate button{padding:6px 12px;font-size:14px}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 64px);transform:translate(-50%,-8px);width:max-content;max-width:min(92vw,520px);background:rgba(35,27,22,.97);border:1px solid var(--fuge);padding:10px 16px;border-radius:14px;font-size:14px;text-align:center;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:10}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s;z-index:5}
+#scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;max-height:84dvh;overflow:auto;overscroll-behavior:contain;background:var(--lack2);border:1px solid var(--fuge);border-bottom:0;border-radius:22px 22px 0 0;padding:8px 18px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:6}
+.sheet.on{transform:none}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--fuge);margin:2px auto 8px}
+.head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px}
+h2{font-size:21px;font-weight:600;margin:0}
+h3{font-size:15px;font-weight:600;margin:0}
+.x{padding:6px 12px;font-size:14px}
+.field{margin:16px 0}
+.lbl{display:flex;justify-content:space-between;color:var(--leise);font-size:13px;margin-bottom:7px}
+.row{display:flex;gap:8px;align-items:center}
+input[type=search]{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid var(--fuge);background:var(--lack);color:var(--text);font:16px var(--font);-webkit-user-select:text;user-select:text}
+.main{background:var(--messing);color:var(--ebenholz);border-color:var(--messing);font-weight:600}
+select{width:100%;appearance:none;-webkit-appearance:none;padding-right:36px;background:var(--lack) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A89A88' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 14px center}
+.seg{display:flex;background:var(--lack);border:1px solid var(--fuge);border-radius:12px;padding:3px}
+.seg button{flex:1;border:0;background:none;border-radius:9px;padding:8px 6px}
+.seg button[aria-pressed=true]{background:var(--elfenbein);color:var(--ebenholz);font-weight:600}
+.check{display:flex;align-items:center;gap:10px;padding:4px 0}
+.check input{width:20px;height:20px;accent-color:var(--messing)}
+input[type=range]{width:100%;accent-color:var(--messing)}
+.list>div{display:flex;align-items:center;gap:8px;padding:11px 2px;border-bottom:1px solid var(--fuge);cursor:pointer}
+.list>div>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .mini{padding:6px 9px;background:none;border-color:transparent;color:var(--leise)}
+.sub{display:flex;align-items:center;justify-content:space-between;margin:22px 0 4px}
+.note{color:var(--leise);font-size:14px;margin:10px 0}
+.note a{color:var(--messing)}
+details{margin-top:18px;border-top:1px solid var(--fuge);padding-top:12px}
+summary{cursor:pointer;font-weight:600}
+ol{padding-left:20px;margin:8px 0;color:var(--leise);font-size:14px}
+ol li{margin:6px 0}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats3 div{background:var(--lack);border-radius:12px;padding:10px 12px}
+.stats3 b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.stats3 span{color:var(--leise);font-size:13px}
+.prog>div{padding:12px 0;border-bottom:1px solid var(--fuge)}
+.prog p{margin:3px 0 0;color:var(--leise);font-size:14px}
+.credit{color:var(--leise);font-size:12px;margin-top:18px}
+
+/* Handy hochkant: Start nur als Symbol, damit der Songtitel Platz hat */
+@media (max-width:430px){
+  #bar{gap:5px;padding:8px 8px}
+  #songsBtn{padding:6px 4px;gap:8px}
+  .icon{width:40px;height:40px}
+  #play{width:48px;height:48px;padding:0;justify-content:center;border-radius:24px}
+  #playLbl{display:none}
+}
+/* Handy quer: Leiste schmaler, damit mehr Platz für Noten bleibt */
+@media (orientation:landscape) and (max-height:520px){
+  #bar{min-height:46px;padding:4px 10px}
+  .icon,#play{height:38px}.icon{width:38px}
+  #songsBtn small{display:none}
+  .sheet{max-height:92dvh}
+}
+@media (prefers-reduced-motion:reduce){.sheet,#scrim,#toast,#fill{transition:none}}
 </style>
 </head>
 <body>
-<div id="panel">
+<header id="bar">
+  <button id="songsBtn" aria-label="Songs öffnen">
+    <svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+    <span class="t"><span id="title">Demo</span><small>Songs</small></span>
+  </button>
+  <button id="restart" class="icon" aria-label="Von vorn"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+  <button id="progBtn" class="icon" aria-label="Fortschritt"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+  <button id="setBtn" class="icon" aria-label="Einstellungen"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+  <button id="play" aria-label="Start"><svg id="playIco" viewBox="0 0 24 24"></svg><span id="playLbl">Start</span></button>
+</header>
+<div id="meter"><div id="fill"></div></div>
+<main id="stage">
+  <canvas id="cv"></canvas>
+  <div id="stats"><span><b id="stepTxt">1</b> / <span id="stepTot">0</span></span><span id="okTxt">✓ 0</span><span id="errTxt">✗ 0</span></div>
+  <div id="rotate" hidden><span>Quer halten: breitere Tasten und mehr Platz für die Noten.</span><button id="rotX">OK</button></div>
+</main>
+<div id="toast" role="status"></div>
+<div id="scrim"></div>
+
+<section class="sheet" id="sheetSongs" aria-label="Songs">
+  <div class="grab"></div>
+  <div class="head"><h2>Songs</h2><button class="x" data-close>Fertig</button></div>
   <div class="row">
-    <input type="text" id="q" placeholder="Songtitel suchen, z. B. River Flows in You" enterkeyhint="search">
+    <input type="search" id="q" placeholder="Titel suchen, z. B. River Flows in You" enterkeyhint="search">
     <button class="main" id="go">Suchen</button>
   </div>
-  <div id="results"></div>
-  <div class="row more">
-    <label>Hand
-      <select id="hand"><option value="R">Rechts</option><option value="L">Links</option><option value="B">Beide</option></select>
-    </label>
-    <label><input type="checkbox" id="simp"> nur oberste Note</label>
-    <label>Tempo <input type="range" id="spd" min="20" max="150" value="60"><span id="spdv">60%</span></label>
+  <div id="results" class="list"></div>
+  <div class="sub"><h3>Meine Songs</h3><label class="btn" for="file">MIDI importieren</label></div>
+  <input type="file" id="file" accept=".mid,.midi,audio/midi,audio/x-midi,audio/mid" multiple hidden>
+  <div id="lib" class="list"></div>
+  <details>
+    <summary>Song nicht gefunden?</summary>
+    <ol>
+      <li>Die Suche oben fragt BitMidi ab. Neue Popsongs fehlen dort oft.</li>
+      <li>Im Browser nach „Songtitel piano midi“ suchen, z. B. auf onlinesequencer.net, freemidi.org oder musescore.com, und die .mid-Datei laden.</li>
+      <li>Hier „MIDI importieren“ tippen und die Datei wählen. Am iPhone liegt sie in Dateien unter Downloads. Mehrere Dateien auf einmal gehen auch.</li>
+    </ol>
+    <p class="note">Importierte und geladene Songs bleiben auf diesem Gerät und funktionieren offline. Mit dem Teilen-Knopf schickst du einen Song an jemand anderen.</p>
+  </details>
+</section>
+
+<section class="sheet" id="sheetSet" aria-label="Üben">
+  <div class="grab"></div>
+  <div class="head"><h2>Üben</h2><button class="x" data-close>Fertig</button></div>
+  <div class="field">
+    <div class="lbl">Hand</div>
+    <div class="seg" id="handSeg"><button data-v="R" aria-pressed="true">Rechts</button><button data-v="L" aria-pressed="false">Links</button><button data-v="B" aria-pressed="false">Beide</button></div>
+    <input type="hidden" id="hand" value="R">
   </div>
-  <div class="row more">
-    <label>Eingabe
-      <select id="inp"><option value="midi">E-Piano per MIDI</option><option value="mic">Mikrofon</option><option value="keys">Mac-Tastatur</option><option value="touch">Nur Touch</option></select>
-    </label>
-    <button id="hear">Hör rein</button>
-    <label><input type="file" id="file" accept=".mid,.midi" style="max-width:150px"></label>
+  <label class="check"><input type="checkbox" id="simp"> Bei Akkorden nur die Melodienote</label>
+  <div class="field">
+    <div class="lbl"><span>Tempo</span><span id="spdv">60 %</span></div>
+    <input type="range" id="spd" min="20" max="150" value="60">
   </div>
-  <div class="row">
-    <button class="main" id="play">Start</button>
-    <button id="restart">Von vorn</button>
-    <button id="toggle">Menü ein/aus</button>
-    <button id="prog">Fortschritt</button>
+  <div class="field">
+    <div class="lbl">Wie spielst du?</div>
+    <select id="inp"><option value="midi">E-Piano per MIDI-Kabel</option><option value="mic">Echtes Klavier über Mikrofon</option><option value="keys">Mac-Tastatur</option><option value="touch">Auf dem Bildschirm tippen</option></select>
   </div>
-  <div id="status">Lädt …</div>
-  <div id="progress" style="display:none"></div>
-</div>
-<canvas id="cv"></canvas>
+  <div class="field">
+    <div class="lbl">Klang der App</div>
+    <select id="snd"><option value="grand">Konzertflügel</option><option value="bright">Klavier, hell</option><option value="epiano">E-Piano</option><option value="custom">Eigene Samples</option><option value="synth">Einfacher Synth (offline)</option></select>
+    <p class="note">Eigene Samples: Audiodateien mit dem Ton im Namen, z. B. C4.mp3, Fs4.wav, Bb3.m4a. Fehlende Töne werden aus dem nächsten Sample umgerechnet.
+    <label class="btn" for="sampleFile" style="display:inline-block;margin-top:8px">Samples laden</label></p>
+    <input type="file" id="sampleFile" accept="audio/*" multiple hidden>
+  </div>
+  <button id="hear" style="width:100%">Aktuelle Noten anhören</button>
+  <p class="credit">Klänge: Salamander Grand Piano von Alexander Holm (CC BY 3.0), FluidR3 GM von Frank Wen (CC BY 3.0) über midi-js-soundfonts. Songsuche: BitMidi.</p>
+</section>
+
+<section class="sheet" id="sheetProg" aria-label="Fortschritt">
+  <div class="grab"></div>
+  <div class="head"><h2>Fortschritt</h2><button class="x" data-close>Fertig</button></div>
+  <div id="progress"></div>
+</section>
 
 <script>
 'use strict';
@@ -137,9 +264,9 @@ function buildSteps(){
   if(steps.length){mn=Infinity;mx=-Infinity;for(const s of steps)for(const n of s.notes){mn=Math.min(mn,n.p);mx=Math.max(mx,n.p);}}
   lo=mn-(mn%12);hi=mx+(11-(mx%12));
   while(hi-lo<35){if(lo>=24)lo-=12;if(hi-lo<35)hi+=12;}
-  layout();restart();
+  layout();restart();preloadSound();
 }
-function restart(){if(playing||hits>=3)logSession(false);kbBase=-100;idx=0;pos=steps.length?Math.max(0,steps[0].t-1.5):0;got=new Set();hits=0;misses=0;secs=0;sessHand=$('#hand').value;sessSpd=+$('#spd').value;lastPitches=new Set();playing=false;$('#play').textContent='Start';updStatus();}
+function restart(){if(playing||hits>=3)logSession(false);kbBase=-100;idx=0;pos=steps.length?Math.max(0,steps[0].t-1.5):0;got=new Set();hits=0;misses=0;secs=0;sessHand=$('#hand').value;sessSpd=+$('#spd').value;lastPitches=new Set();playing=false;playLbl('Start');updStatus();}
 
 
 /* ---------- Fortschritt (bleibt lokal auf dem Gerät) ---------- */
@@ -157,20 +284,23 @@ function logSession(finished){
 const ymd=t=>t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
 function day(d){return ymd(new Date(d));}
 function showProgress(){
-  const l=getLog(),el=$('#progress');
-  if(!l.length){el.textContent='Noch keine Übungen gespeichert. Spiel ein Stück bis zum Ende oder tippe „Von vorn“.';return;}
+  const l=getLog(),el=$('#progress');el.textContent='';
+  const add=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e;};
+  if(!l.length){el.append(add('p','note','Noch keine Übungen gespeichert. Spiel ein Stück bis zum Ende oder tippe auf „Von vorn“.'));return;}
   const days=[...new Set(l.map(x=>day(x.d)))].sort();
   const dk=n=>{const t=new Date();t.setDate(t.getDate()-n);return ymd(t);};
   let streak=0,off=days.includes(dk(0))?0:1;
   while(days.includes(dk(off+streak)))streak++;
   const today=dk(0),mins=Math.round(l.filter(x=>day(x.d)===today).reduce((a,x)=>a+x.sec,0)/60);
   const by={};l.forEach(x=>{(by[x.song]=by[x.song]||[]).push(x);});
-  let out='Heute: '+mins+' Min · Serie: '+streak+' Tag(e) · Übungstage gesamt: '+days.length+'\n';
+  const top=add('div','stats3');
+  [[mins+' Min','heute'],[streak,streak===1?'Tag in Folge':'Tage in Folge'],[days.length,'Übungstage']].forEach(([v,t])=>{const b=add('div');b.append(add('b','',v),add('span','',t));top.append(b);});
+  const list=add('div','prog');
   // die 6 zuletzt geübten Stücke, nicht die 6 zuletzt neu hinzugekommenen
-  Object.keys(by).sort((a,b)=>by[a][by[a].length-1].d<by[b][by[b].length-1].d?-1:1).slice(-6).forEach(k=>{const a=by[k],fin=a.filter(x=>x.fin),acc=x=>Math.round(100*x.hits/Math.max(1,x.hits+x.misses));
+  Object.keys(by).sort((a,b)=>by[a][by[a].length-1].d<by[b][by[b].length-1].d?-1:1).slice(-6).reverse().forEach(k=>{const a=by[k],fin=a.filter(x=>x.fin),acc=x=>Math.round(100*x.hits/Math.max(1,x.hits+x.misses));
     const last=a[a.length-1],best=fin.length?Math.max(...fin.map(x=>x.spd)):0;
-    out+='\n'+k+'\n  '+a.length+'× geübt · zuletzt '+acc(last)+' % bei '+last.spd+' % Tempo'+(fin.length?' · schnellster Durchlauf '+best+' %':' · noch nie fertig')+'\n';});
-  el.textContent=out;
+    const row=add('div');row.append(add('h3','',k),add('p','',a.length+'× geübt, zuletzt '+acc(last)+' % Treffer bei '+last.spd+' % Tempo. '+(fin.length?'Schnellster Durchlauf: '+best+' % Tempo.':'Noch nie bis zum Ende.')));list.append(row);});
+  el.append(top,list);
 }
 
 /* ---------- Eingabe ---------- */
@@ -183,7 +313,7 @@ function press(p,now=performance.now()){
     if(s.notes.every(n=>got.has(n.p))){
       lastPitches=new Set(s.notes.map(n=>n.p));lockUntil=now+350;
       idx++;hits++;got=new Set();updStatus();
-      if(idx>=steps.length){const acc=Math.round(100*hits/Math.max(1,hits+misses));playing=false;$('#play').textContent='Nochmal';updStatus('Fertig, '+acc+' % Treffer');logSession(true);}
+      if(idx>=steps.length){const acc=Math.round(100*hits/Math.max(1,hits+misses));playing=false;playLbl('Nochmal');updStatus('Geschafft: '+acc+' % Treffer');logSession(true);}
     }
   }else misses++;
 }
@@ -219,7 +349,8 @@ function followWindow(){
   for(const p of cur)if(!inWin(kbBase,p))got.add(p);
 }
 window.addEventListener('keydown',e=>{
-  if((e.target.tagName==='INPUT'&&e.target.type==='text')||e.metaKey||e.ctrlKey||e.altKey)return;
+  if((e.target.tagName==='INPUT'&&/^(text|search)$/.test(e.target.type))||e.metaKey||e.ctrlKey||e.altKey)return;
+  if(e.code==='Escape'){closeSheets();return;}
   // Fokus von Knopf/Regler nehmen, sonst löst Space den fokussierten Knopf zusätzlich aus
   // bzw. Regler und Checkbox schlucken die Klaviertasten
   const own=()=>{e.preventDefault();if(e.target!==document.body&&e.target.blur)e.target.blur();};
@@ -234,7 +365,7 @@ window.addEventListener('keydown',e=>{
 /* MIDI */
 let midiAcc=null;
 async function initMidi(){
-  if(!navigator.requestMIDIAccess){return 'Dein Browser kann kein MIDI (iPhone-Safari). Nimm „Mikrofon“ oder „Nur Touch“.';}
+  if(!navigator.requestMIDIAccess){return 'Dieser Browser kann kein MIDI (iPhone-Safari). Nimm „Echtes Klavier über Mikrofon“ oder „Auf dem Bildschirm tippen“.';}
   try{
     midiAcc=await navigator.requestMIDIAccess();
     const bind=()=>{let names=[];midiAcc.inputs.forEach(i=>{i.onmidimessage=e=>{const[st,a,b]=e.data;if((st&0xF0)===0x90&&b>0)press(a);};names.push(i.name);});
@@ -249,19 +380,52 @@ let ac=null,an=null,fbuf=null,micOn=false,hist={};
 let toneUntil=0;
 // iPhone-Safari meldet nach Unterbrechungen (Anruf, App-Wechsel) 'interrupted' statt 'suspended'
 function ctx(){if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();if(ac.state!=='running')ac.resume().catch(()=>{});return ac;}
-function tone(p,dur=0.6){const c=ctx(),o=c.createOscillator(),g=c.createGain();
-  toneUntil=performance.now()+(dur+0.15)*1000; // eigener Ton soll das Mikro nicht auslösen
-  o.type='triangle';o.frequency.value=440*Math.pow(2,(p-69)/12);
-  g.gain.setValueAtTime(0.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(0.35,c.currentTime+0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+dur+0.05);}
+// Kompressor am Ausgang: Akkorde aus mehreren Samples übersteuern sonst
+function out(){if(!out.n){const c=ctx(),k=c.createDynamicsCompressor();k.threshold.value=-10;k.ratio.value=4;k.connect(c.destination);out.n=k;}return out.n;}
+
+/* Klang: Samples echter Instrumente, aus dem Netz geladen und danach offline im Cache */
+const SHARP=['C','Cs','D','Ds','E','F','Fs','G','Gs','A','As','B'],FLAT=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const nm=(a,p)=>a[p%12]+(Math.floor(p/12)-1);
+const GLEITZ='https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/';
+const PACKS={
+  grand:{url:p=>'https://tonejs.github.io/audio/salamander/'+nm(SHARP,p)+'.mp3',root:p=>(p-21)%3===0}, // jede kleine Terz A0 … C8
+  bright:{url:p=>GLEITZ+'acoustic_grand_piano-mp3/'+nm(FLAT,p)+'.mp3',root:()=>true},
+  epiano:{url:p=>GLEITZ+'electric_piano_1-mp3/'+nm(FLAT,p)+'.mp3',root:()=>true},
+  custom:{},synth:{}
+};
+let snd='grand';const bufs={},loading={};
+function loadRoot(pk,p){const k=pk+p;if(loading[k])return loading[k];
+  return loading[k]=fetch(PACKS[pk].url(p)).then(r=>{if(!r.ok)throw new Error(r.status);return r.arrayBuffer();})
+    .then(b=>ctx().decodeAudioData(b)).then(buf=>{(bufs[pk]=bufs[pk]||{})[p]=buf;}).catch(()=>{delete loading[k];});}
+function ensure(p,span=2){const P=PACKS[snd];if(!P.url)return;for(let q=Math.max(21,p-span);q<=Math.min(108,p+span);q++)if(P.root(q))loadRoot(snd,q);}
+function preloadSound(){if(!PACKS[snd].url)return;for(let p=Math.max(21,lo-2);p<=Math.min(108,hi+2);p++)if(PACKS[snd].root(p))loadRoot(snd,p);}
+function pickBuf(p){const b=bufs[snd];if(!b)return null;let best=null,d=99;for(const k in b){const dd=Math.abs(k-p);if(dd<d){d=dd;best=+k;}}
+  return best!==null&&d<=6?{buf:b[best],rate:Math.pow(2,(p-best)/12)}:null;}
+function tone(p,dur=0.9){const c=ctx(),t=c.currentTime;
+  toneUntil=performance.now()+(dur+0.5)*1000; // eigener Ton soll das Mikro nicht auslösen
+  ensure(p);
+  const s=snd!=='synth'&&pickBuf(p);
+  if(s){const src=c.createBufferSource(),g=c.createGain();src.buffer=s.buf;src.playbackRate.value=s.rate;
+    g.gain.setValueAtTime(0.9,t);g.gain.setValueAtTime(0.9,t+dur);g.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.45);
+    src.connect(g).connect(out());src.start(t);src.stop(t+dur+0.5);return;}
+  // Ersatz, solange Samples laden oder offline: weicher Anschlag mit Abklingen statt Dauerton
+  const o=c.createOscillator(),o2=c.createOscillator(),g=c.createGain();
+  o.type='triangle';o.frequency.value=440*Math.pow(2,(p-69)/12);o2.type='sine';o2.frequency.value=o.frequency.value*2;
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.3,t+0.008);g.gain.exponentialRampToValueAtTime(0.08,t+0.3);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.3);o.connect(g);o2.connect(g);g.connect(out());o.start(t);o2.start(t);o.stop(t+dur+0.35);o2.stop(t+dur+0.35);}
+// Dateiname → Tonhöhe: C4, F#3, Fs3, Bb2, a0 …
+function noteFromName(n){const m=n.replace(/\.[^.]+$/,'').match(/(?:^|[^a-z])([a-g])(#|s|b)?(-?[0-8])(?![0-9])/i);if(!m)return null;
+  let p=[0,2,4,5,7,9,11]['cdefgab'.indexOf(m[1].toLowerCase())]+12*(+m[3]+1);if(m[2]==='#'||m[2]==='s')p++;else if(m[2]==='b')p--;return p;}
+async function loadCustom(){try{for(const s of await DB.all('samples'))(bufs.custom=bufs.custom||{})[s.id]=await ctx().decodeAudioData(s.data.slice(0));}catch(e){}}
+
 async function initMic(){
-  if(micOn)return 'Mikrofon an. Spiel laut genug, Handy nah ans Piano.';
+  if(micOn)return 'Mikrofon an. Spiel laut genug, Handy nah ans Klavier.';
   try{
     const c=ctx(); // noch innerhalb der Nutzergeste anlegen, sonst bleibt er auf dem iPhone stumm
     const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     an=c.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0;
     c.createMediaStreamSource(st).connect(an);fbuf=new Float32Array(an.frequencyBinCount);micOn=true;
-    return 'Mikrofon an. Spiel laut genug, Handy nah ans Piano.';
+    return 'Mikrofon an. Spiel laut genug, Handy nah ans Klavier.';
   }catch(e){return 'Kein Mikrofonzugriff: '+e.message;}
 }
 function lvlAt(f){
@@ -297,76 +461,121 @@ function micScan(now){
   }
 }
 
+/* ---------- Meine Songs und eigene Samples (IndexedDB, bleibt auf dem Gerät) ---------- */
+const DB=(()=>{let op;
+  const open=()=>op||(op=new Promise((res,rej)=>{const r=indexedDB.open('piano-trainer',1);
+    r.onupgradeneeded=()=>{r.result.createObjectStore('songs',{keyPath:'id'});r.result.createObjectStore('samples',{keyPath:'id'});};
+    r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}));
+  const run=async(st,mode,fn)=>{const db=await open();return new Promise((res,rej)=>{const t=db.transaction(st,mode),q=fn(t.objectStore(st));
+    t.oncomplete=()=>res(q.result);t.onerror=()=>rej(t.error);});};
+  return {all:st=>run(st,'readonly',s=>s.getAll()),put:(st,v)=>run(st,'readwrite',s=>s.put(v)),del:(st,k)=>run(st,'readwrite',s=>s.delete(k))};
+})();
+async function saveSong(name,data){try{await DB.put('songs',{id:name,name,data,played:Date.now()});}catch(e){}}
+async function renderLib(){
+  const el=$('#lib');let l=[];try{l=await DB.all('songs');}catch(e){}
+  el.textContent='';
+  if(!l.length){const p=document.createElement('p');p.className='note';p.textContent='Noch leer. Gesuchte und importierte Songs landen hier und gehen dann auch offline.';el.append(p);return;}
+  l.sort((a,b)=>(b.played||0)-(a.played||0));
+  for(const s of l){
+    const d=document.createElement('div'),t=document.createElement('span');t.textContent=s.name;d.append(t);
+    const sh=document.createElement('button');sh.className='mini';sh.textContent='Teilen';
+    sh.onclick=e=>{e.stopPropagation();shareSong(s);};
+    const del=document.createElement('button');del.className='mini';del.textContent='Löschen';
+    del.onclick=async e=>{e.stopPropagation();if(!confirm('„'+s.name+'“ aus Meine Songs löschen?'))return;try{await DB.del('songs',s.id);}catch(x){}renderLib();};
+    d.append(sh,del);
+    d.onclick=()=>{try{setSong(parseMidi(s.data),s.name);saveSong(s.name,s.data);closeSheets();}catch(x){setMsg(s.name+': '+x.message);}};
+    el.append(d);
+  }
+}
+// Über das Teilen-Menü (AirDrop, WhatsApp, Mail); am Mac ohne Teilen-Menü als Download
+function shareSong(s){
+  const f=new File([s.data],s.name+'.mid',{type:'audio/midi'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:s.name}).catch(()=>{});return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+
 /* Suche */
 async function search(){
   const q=$('#q').value.trim();if(!q)return;
-  setMsg('Suche …');$('#results').innerHTML='';
+  const res=$('#results'),note=t=>{res.textContent='';const p=document.createElement('p');p.className='note';p.textContent=t;res.append(p);};
+  note('Suche …');
   try{
     const r=await fetch('https://bitmidi.com/api/midi/search?q='+encodeURIComponent(q));
     const j=await r.json();const list=(j.result&&j.result.results)||[];
-    if(!list.length){setMsg('Nichts gefunden. Anderen Titel oder „Interpret Titel“ probieren.');return;}
-    setMsg(list.length+' Treffer, antippen zum Laden');
-    list.forEach(it=>{const d=document.createElement('div');d.textContent=it.name.replace(/\.mid$/i,'');
-      d.onclick=()=>loadUrl('https://bitmidi.com'+it.downloadUrl,it.name);$('#results').appendChild(d);});
-  }catch(e){setMsg('Suche fehlgeschlagen: '+e.message);}
+    if(!list.length){note('Nichts gefunden. Probier „Interpret Titel“ oder importiere eine MIDI-Datei (Anleitung unten).');return;}
+    res.textContent='';
+    list.forEach(it=>{const d=document.createElement('div'),t=document.createElement('span');t.textContent=it.name.replace(/\.mid$/i,'');d.append(t);
+      d.onclick=()=>loadUrl('https://bitmidi.com'+it.downloadUrl,it.name);res.append(d);});
+  }catch(e){note('Suche fehlgeschlagen: '+e.message+'. Ohne Internet gehen nur Meine Songs.');}
 }
 async function loadUrl(u,name){
   setMsg('Lade …');
-  try{const b=await (await fetch(u)).arrayBuffer();setSong(parseMidi(b),name.replace(/\.mid$/i,''));$('#results').innerHTML='';$('#panel').classList.add('hide');}
+  try{const b=await (await fetch(u)).arrayBuffer(),n=name.replace(/\.mid$/i,'');setSong(parseMidi(b),n);saveSong(n,b);$('#results').textContent='';closeSheets();}
   catch(e){setMsg('Laden fehlgeschlagen: '+e.message);}
 }
-function setSong(n,name){logSession(false);songNotes=n;songName=name;buildSteps();setMsg(name+' · '+steps.length+' Schritte');}
+function setSong(n,name){logSession(false);songNotes=n;songName=name;buildSteps();setMsg(name+': '+steps.length+' Schritte');}
 
 /* ---------- Zeichnen ---------- */
+const C={lane:'#211913',laneC:'#2F251D',rh:'#7DB7E8',rhA:'#BFDDF7',lh:'#E8935E',lhA:'#F7C8A6',rhKey:'#CFE3F5',lhKey:'#F6D6C0',rhKeyB:'#3F79AE',lhKeyB:'#A9582D',
+  ivory:'#F2EBDD',ebony:'#15110E',felt:'#9E2B25',brass:'#C9A35A',ok:'#6FCF8E',err:'#E2553F',label:'#8F8373'};
+const FONT='"Instrument Sans",system-ui,sans-serif';
 const cv=$('#cv'),g=cv.getContext('2d');let W=0,H=0,dpr=1,whites=[],wIdx={},ww=0,bw=0,kh=0;
 function resize(){
   dpr=window.devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;g.setTransform(dpr,0,0,dpr,0,0);layout();
 }
 function layout(){
   whites=[];wIdx={};for(let p=lo;p<=hi;p++)if(!isBlack(p)){wIdx[p]=whites.length;whites.push(p);}
-  ww=W/whites.length;bw=ww*0.62;kh=Math.min(120,Math.max(70,H*0.2));
+  ww=W/whites.length;bw=ww*0.6;kh=Math.min(130,Math.max(72,H*0.22));
+  rotHint();
 }
 function keyRect(p){return isBlack(p)?{x:(wIdx[p-1]+1)*ww-bw/2,w:bw,black:true}:{x:wIdx[p]*ww,w:ww,black:false};}
 function draw(now){
   g.clearRect(0,0,W,H);
   const fh=H-kh,pps=fh/LOOK;
-  // Raster
-  g.strokeStyle='#1c1c1c';g.lineWidth=1;
-  for(const p of whites){const r=keyRect(p);g.beginPath();g.moveTo(r.x,0);g.lineTo(r.x,fh);g.stroke();}
+  // Bahnen, jede Oktave (C) etwas deutlicher
+  for(const p of whites){const r=keyRect(p);g.fillStyle=p%12===0?C.laneC:C.lane;g.fillRect(Math.round(r.x),0,1,fh);}
   // Noten
   const cur=idx<steps.length?steps[idx]:null;
+  g.textAlign='center';g.font='600 '+Math.max(9,Math.min(13,ww*0.45))+'px '+FONT;
   for(let i=Math.max(0,idx-30);i<steps.length;i++){
     const s=steps[i];if(s.t>pos+LOOK)break;
     for(const n of s.notes){
       if(n.t1<pos)continue;
-      const r=keyRect(n.p);
+      const r=keyRect(n.p),right=n.p>=SPLIT;
       let yb=fh-(n.t0-pos)*pps,yt=fh-(Math.max(n.t1,n.t0+0.12)-pos)*pps;
       if(yb>fh)yb=fh;if(yt>yb-8)yt=yb-8;
       const act=cur&&s===cur;
-      g.fillStyle=n.p>=SPLIT?(act?'#7fb2ff':'#3d6fd1'):(act?'#ffb36b':'#d1782e');
-      g.beginPath();g.roundRect(r.x+1,yt,r.w-2,yb-yt,4);g.fill();
-      if(act){g.strokeStyle='#fff';g.lineWidth=2;g.stroke();}
+      if(act){g.shadowColor=right?C.rh:C.lh;g.shadowBlur=16;}
+      g.fillStyle=act?(right?C.rhA:C.lhA):(right?C.rh:C.lh);
+      g.beginPath();g.roundRect(r.x+1.5,yt,r.w-3,yb-yt,Math.min(6,r.w/3));g.fill();g.shadowBlur=0;
+      // Notenname unten in der Note, wenn Platz ist
+      if(r.w>=13&&yb-yt>=18){g.fillStyle='rgba(21,17,14,.72)';g.fillText(NN[n.p%12].replace('#','♯'),r.x+r.w/2,yb-5);}
     }
   }
-  // Trefferlinie
-  g.fillStyle='#C2A985';g.fillRect(0,fh-2,W,2);
+  // Filzleiste als Trefferlinie, wie über den Tasten eines echten Klaviers
+  g.fillStyle=C.felt;g.fillRect(0,fh-6,W,7);
+  g.fillStyle='rgba(255,255,255,.1)';g.fillRect(0,fh-6,W,1);
   // Tastatur
-  const exp=new Set(cur&&playing?cur.notes.map(n=>n.p):[]);
-  const col=p=>{const f=flash[p];if(f&&now-f.t<250)return f.ok?'#5ddc8c':'#ff5a5a';if(got.has(p))return '#5ddc8c';return null;};
+  const exp=new Map(cur&&playing?cur.notes.map(n=>[n.p,n.p>=SPLIT]):[]);
+  const col=p=>{const f=flash[p];if(f&&now-f.t<250)return f.ok?C.ok:C.err;if(got.has(p))return C.ok;return null;};
   for(const p of whites){const r=keyRect(p);
-    g.fillStyle=col(p)||(exp.has(p)?'#ffe9a8':'#F5F5F5');g.fillRect(r.x+0.5,fh,r.w-1,kh);
-    if(p%12===0){g.fillStyle='#888';g.font='10px sans-serif';g.textAlign='center';g.fillText('C'+(Math.floor(p/12)-1),r.x+r.w/2,H-4);}}
-  for(let p=lo;p<=hi;p++)if(isBlack(p)){const r=keyRect(p);
-    g.fillStyle=col(p)||(exp.has(p)?'#c9a43a':'#111');g.fillRect(r.x,fh,r.w,kh*0.62);}
+    g.fillStyle=col(p)||(exp.has(p)?(exp.get(p)?C.rhKey:C.lhKey):C.ivory);
+    g.beginPath();g.roundRect(r.x+0.75,fh+1,r.w-1.5,kh-1,[0,0,5,5]);g.fill();
+    g.fillStyle='rgba(60,40,20,.10)';g.fillRect(r.x+0.75,fh+kh-7,r.w-1.5,6);
+    if(p%12===0&&inpMode!=='keys'){g.fillStyle=C.label;g.font='600 10px '+FONT;g.fillText('C'+(Math.floor(p/12)-1),r.x+r.w/2,fh+kh-11);}}
+  for(let p=lo;p<=hi;p++)if(isBlack(p)){const r=keyRect(p),bh=kh*0.62;
+    g.fillStyle=col(p)||(exp.has(p)?(exp.get(p)?C.rhKeyB:C.lhKeyB):C.ebony);
+    g.beginPath();g.roundRect(r.x,fh+1,r.w,bh,[0,0,3,3]);g.fill();
+    g.fillStyle='rgba(255,255,255,.09)';g.fillRect(r.x+2,fh+bh-7,r.w-4,4);}
   if(inpMode==='keys'){
     const a=Math.max(kbBase,lo),b=Math.min(kbBase+KBSPAN,hi);
     if(a<=b){
       const xl=keyRect(a).x,xr=keyRect(b).x+keyRect(b).w;
-      g.fillStyle='rgba(10,10,10,0.55)';g.fillRect(0,fh,xl,kh);g.fillRect(xr,fh,W-xr,kh);
-      g.fillStyle='#C2A985';g.fillRect(xl,fh+kh-3,xr-xl,3);
-      g.textAlign='center';g.font='600 '+Math.max(10,Math.min(16,ww*0.5))+'px sans-serif';
+      g.fillStyle='rgba(25,19,15,0.62)';g.fillRect(0,fh,xl,kh);g.fillRect(xr,fh,W-xr,kh);
+      g.fillStyle=C.brass;g.fillRect(xl,fh+kh-3,xr-xl,3);
+      g.textAlign='center';g.font='600 '+Math.max(10,Math.min(16,ww*0.5))+'px '+FONT;
       for(let p=a;p<=b;p++){const r=keyRect(p);
-        g.fillStyle=r.black?'#C2A985':'#0A0A0A';
+        g.fillStyle=r.black?C.brass:C.ebony;
         g.fillText(kbLabel(p-kbBase),r.x+r.w/2,r.black?fh+kh*0.42:fh+kh-14);}
     }
   }
@@ -375,13 +584,41 @@ function loop(now){
   const dt=Math.min(0.1,(now-(loop.l||now))/1000);loop.l=now;
   if(playing)secs+=dt;
   if(playing&&idx<steps.length){const tg=steps[idx].t;if(pos<tg)pos=Math.min(tg,pos+dt*speed());}
+  if(playing!==loop.p){loop.p=playing;keepAwake(playing);}
   if(inpMode==='keys')followWindow();
   micScan(now);draw(now);requestAnimationFrame(loop);
 }
 
+/* Bildschirm beim Üben anlassen (Handy auf dem Notenpult) */
+let wl=null;
+async function keepAwake(on){try{
+  if(on&&!wl&&navigator.wakeLock){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null;});}
+  else if(!on&&wl){wl.release();wl=null;}}catch(e){}}
+
 /* ---------- UI ---------- */
-function setMsg(t){$('#status').textContent=t;}
-function updStatus(t){setMsg((t?t+' · ':'')+(songName||'Demo')+' · Schritt '+Math.min(idx+1,steps.length)+'/'+steps.length+' · Treffer '+hits+' · Fehlgriffe '+misses);}
+let toastT=0;
+function setMsg(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),Math.max(2600,t.length*65));}
+function updStatus(t){
+  $('#title').textContent=songName||'Demo';
+  $('#stepTxt').textContent=Math.min(idx+1,steps.length);$('#stepTot').textContent=steps.length;
+  $('#okTxt').textContent='✓ '+hits;$('#errTxt').textContent='✗ '+misses;
+  $('#fill').style.width=(steps.length?100*idx/steps.length:0)+'%';
+  if(t)setMsg(t);
+}
+const ICO={play:'<path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/>',
+  pause:'<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/>'};
+function playLbl(t){$('#playLbl').textContent=t;$('#playIco').innerHTML=t==='Pause'?ICO.pause:ICO.play;$('#play').setAttribute('aria-label',t);}
+function openSheet(id){closeSheets();if(playing){playing=false;playLbl('Weiter');}$(id).classList.add('on');$('#scrim').classList.add('on');}
+function closeSheets(){document.querySelectorAll('.sheet.on').forEach(s=>s.classList.remove('on'));$('#scrim').classList.remove('on');}
+function rotHint(){let off=false;try{off=localStorage.getItem('pt_rot')==='1';}catch(e){}
+  $('#rotate').hidden=off||!(innerHeight>innerWidth&&innerWidth<600&&whites.length>=15);}
+const PREF='pt_prefs';
+function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({hand:$('#hand').value,simp:$('#simp').checked,spd:$('#spd').value,inp:$('#inp').value,snd}));}catch(e){}}
+function setHand(v){$('#hand').value=v;document.querySelectorAll('#handSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));}
+function loadPrefs(){try{const p=JSON.parse(localStorage.getItem(PREF)||'{}');
+  if(p.hand)setHand(p.hand);if(p.simp)$('#simp').checked=true;if(p.spd){$('#spd').value=p.spd;$('#spdv').textContent=p.spd+' %';}
+  if(p.inp)$('#inp').value=p.inp;if(p.snd&&PACKS[p.snd]){snd=p.snd;$('#snd').value=p.snd;}}catch(e){}}
+
 cv.addEventListener('pointerdown',e=>{
   const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,fh=H-kh;
   if(y<fh){return;}
@@ -390,29 +627,54 @@ cv.addEventListener('pointerdown',e=>{
   if(hit===null){const i=Math.floor(x/ww);if(whites[i]!==undefined)hit=whites[i];}
   if(hit!==null){tone(hit);press(hit);}
 });
-$('#go').onclick=search;$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')search();});
+$('#go').onclick=search;$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){e.target.blur();search();}});
 $('#play').onclick=async()=>{ctx();
-  if(!steps.length){setMsg('Für diese Hand gibt es keine Noten. Hand wechseln.');return;}
+  if(!steps.length){setMsg('Für diese Hand gibt es keine Noten. Unter Einstellungen die Hand wechseln.');return;}
   if(inpMode==='mic'&&!micOn)setMsg(await initMic());
-  if(idx>=steps.length)restart();playing=!playing;$('#play').textContent=playing?'Pause':'Weiter';$('#panel').classList.add('hide');};
+  if(idx>=steps.length)restart();playing=!playing;playLbl(playing?'Pause':'Weiter');closeSheets();};
 $('#restart').onclick=restart;
-$('#prog').onclick=()=>{const e=$('#progress');if(e.style.display==='none'){showProgress();e.style.display='block';$('#panel').classList.remove('hide');}else e.style.display='none';};
+$('#songsBtn').onclick=()=>{renderLib();openSheet('#sheetSongs');};
+$('#setBtn').onclick=()=>openSheet('#sheetSet');
+$('#progBtn').onclick=()=>{showProgress();openSheet('#sheetProg');};
+$('#scrim').onclick=closeSheets;
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheets);
+$('#rotX').onclick=()=>{try{localStorage.setItem('pt_rot','1');}catch(e){}$('#rotate').hidden=true;};
 window.addEventListener('pagehide',()=>logSession(false));
 // Als iPhone-App (Home-Bildschirm) kommt beim Wegwischen oft kein pagehide mehr, nur visibilitychange
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')logSession(false);});
-$('#toggle').onclick=()=>$('#panel').classList.toggle('hide');
-$('#hand').onchange=buildSteps;$('#simp').onchange=buildSteps;
-$('#spd').oninput=()=>{const v=+$('#spd').value;$('#spdv').textContent=v+'%';sessSpd=hits||misses?Math.min(sessSpd,v):v;};
-$('#hear').onclick=()=>{ctx();if(idx<steps.length)steps[idx].notes.forEach(n=>tone(n.p));};
-$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{setSong(parseMidi(await f.arrayBuffer()),f.name.replace(/\.midi?$/i,''));$('#panel').classList.add('hide');}catch(x){setMsg(x.message);}};
-$('#inp').onchange=async()=>{const v=$('#inp').value;inpMode=v;if(v==='keys')setMsg('Tastatur: untere Reihe = weiße Tasten, obere Reihe = schwarze. Das Fenster folgt dem Song, ←/→ verschiebt es. Space = Start/Pause.');if(v==='midi')setMsg(await initMidi());if(v==='mic')setMsg(await initMic());if(v==='touch')setMsg('Nur Touch: auf die Tasten tippen.');};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')logSession(false);else if(playing)keepAwake(true);});
+document.querySelectorAll('#handSeg button').forEach(b=>b.onclick=()=>{setHand(b.dataset.v);buildSteps();savePrefs();});
+$('#simp').onchange=()=>{buildSteps();savePrefs();};
+$('#spd').oninput=()=>{const v=+$('#spd').value;$('#spdv').textContent=v+' %';sessSpd=hits||misses?Math.min(sessSpd,v):v;};
+$('#spd').onchange=savePrefs;
+$('#hear').onclick=()=>{ctx();if(idx<steps.length)steps[idx].notes.forEach(n=>tone(n.p,1.4));};
+$('#snd').onchange=()=>{snd=$('#snd').value;savePrefs();ctx();
+  if(snd==='custom'&&!bufs.custom)setMsg('Noch keine eigenen Samples. Tippe auf „Samples laden“.');else{preloadSound();if(PACKS[snd].url)setMsg('Klang wird geladen und danach offline gespeichert.');}};
+$('#file').onchange=async e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;let ok=0,first=null;
+  for(const f of fs){try{const b=await f.arrayBuffer(),n=parseMidi(b),name=f.name.replace(/\.midi?$/i,'');await saveSong(name,b);ok++;if(!first)first={n,name};}
+    catch(x){setMsg(f.name+': '+x.message);}}
+  if(!first)return;
+  setSong(first.n,first.name);
+  if(fs.length>1){renderLib();setMsg(ok+' von '+fs.length+' Songs importiert');}else closeSheets();
+};
+$('#sampleFile').onchange=async e=>{const fs=[...e.target.files];e.target.value='';let n=0;
+  for(const f of fs){const p=noteFromName(f.name);if(p===null)continue;
+    try{const ab=await f.arrayBuffer();(bufs.custom=bufs.custom||{})[p]=await ctx().decodeAudioData(ab.slice(0));n++;try{await DB.put('samples',{id:p,data:ab});}catch(x){}}catch(x){}}
+  if(n){snd='custom';$('#snd').value='custom';savePrefs();setMsg(n+' Samples geladen, Klang: Eigene Samples');}
+  else setMsg('Keine Datei erkannt. Der Ton muss im Namen stehen, z. B. C4.mp3 oder Fs3.wav.');
+};
+$('#inp').onchange=async()=>{const v=$('#inp').value;inpMode=v;savePrefs();if(v==='keys')setMsg('Untere Buchstabenreihe = weiße Tasten, obere = schwarze. Das Fenster folgt dem Song, ←/→ verschiebt es, Leertaste = Start/Pause.');if(v==='midi')setMsg(await initMidi());if(v==='mic')setMsg(await initMic());if(v==='touch')setMsg('Tippe unten auf die Tasten.');};
 window.addEventListener('resize',resize);
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 (async()=>{
-  if(!navigator.requestMIDIAccess){$('#inp').value='mic';}
+  loadPrefs();
+  if(!navigator.requestMIDIAccess&&$('#inp').value==='midi'){$('#inp').value='mic';}
   inpMode=$('#inp').value;
-  songNotes=demoSong();songName='Demo: Ode an die Freude';buildSteps();resize();
-  requestAnimationFrame(loop);
-  if($('#inp').value==='midi')setMsg(await initMidi());else setMsg('Suche oben nach einem Song. Für Mikrofon-Modus „Eingabe“ im Menü antippen.');
+  songNotes=demoSong();songName='Ode an die Freude';buildSteps();resize();
+  requestAnimationFrame(loop);loadCustom();
+  // zuletzt geübten Song wieder öffnen
+  let last=null;try{const l=await DB.all('songs');if(l.length)last=l.sort((a,b)=>(b.played||0)-(a.played||0))[0];}catch(e){}
+  if(last){try{setSong(parseMidi(last.data),last.name);}catch(e){}}
+  if(inpMode==='midi')setMsg(await initMidi());else if(!last)setMsg('Tippe oben auf den Songtitel, um einen Song zu suchen.');
 })();
 </script>
 </body>
