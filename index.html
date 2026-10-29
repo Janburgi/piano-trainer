@@ -26,7 +26,9 @@
 html,body{margin:0;height:100%;background:var(--lack);color:var(--text);font:15px/1.4 var(--font);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 body{display:flex;flex-direction:column;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-button,.btn,select{font:15px var(--font);color:var(--text);background:var(--lack);border:1px solid var(--fuge);border-radius:12px;padding:10px 14px;cursor:pointer}
+/* Knöpfe ohne Rahmen, abgesetzt nur durch eine Tonstufe; Eingabefelder behalten ihre Linie */
+button,.btn{font:15px var(--font);color:var(--text);background:#2F261F;border:0;border-radius:12px;padding:10px 14px;cursor:pointer;display:inline-block}
+select{font:15px var(--font);color:var(--text);background:var(--lack);border:1px solid var(--fuge);border-radius:12px;padding:10px 14px;cursor:pointer}
 button:active,.btn:active{filter:brightness(1.15)}
 :focus-visible{outline:2px solid var(--messing);outline-offset:2px}
 
@@ -36,6 +38,7 @@ button:active,.btn:active{filter:brightness(1.15)}
 #title{font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #songsBtn small{color:var(--leise);font-size:12px}
 .icon{width:42px;height:42px;padding:0;display:grid;place-items:center;background:var(--lack2)}
+#bar .icon{background:none}
 #play{height:42px;padding:0 18px 0 14px;display:flex;align-items:center;gap:6px;background:var(--messing);color:var(--ebenholz);border:0;border-radius:21px;font-weight:600}
 #meter{height:3px;flex:none;position:relative}
 #fill{position:relative;height:100%;width:0;background:var(--messing);transition:width .25s}
@@ -69,6 +72,20 @@ canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;displa
 .head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px}
 h2{font-size:21px;font-weight:600;margin:0}
 h3{font-size:15px;font-weight:600;margin:0}
+.sheet>h3,#syncGrp>h3{font-size:17px;margin:30px 0 4px}
+.wide{width:100%;margin-top:14px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:8px 0;cursor:pointer}
+.switch[hidden]{display:none}
+.seg+.switch{margin-top:8px}
+.switch input{appearance:none;-webkit-appearance:none;width:48px;height:29px;margin:0;border-radius:15px;background:var(--fuge);position:relative;flex:none;cursor:pointer;transition:background .2s}
+.switch input::after{content:'';position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:var(--elfenbein);transition:transform .2s}
+.switch input:checked{background:var(--messing)}
+.switch input:checked::after{transform:translateX(19px)}
+.code{display:flex;align-items:center;gap:10px;background:var(--lack);border-radius:12px;padding:8px 8px 8px 14px;margin:10px 0 2px}
+.code span{flex:1;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;-webkit-user-select:all;user-select:all;overflow-wrap:anywhere}
+.code button{padding:7px 12px;font-size:14px}
+#syncOff .row+.row,#syncOnBox .row{margin-top:10px}
+input[type=text]{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid var(--fuge);background:var(--lack);color:var(--text);font:16px var(--font);-webkit-user-select:text;user-select:text}
 .x{padding:6px 12px;font-size:14px}
 .field{margin:16px 0}
 .lbl{display:flex;justify-content:space-between;color:var(--leise);font-size:13px;margin-bottom:7px}
@@ -76,7 +93,7 @@ h3{font-size:15px;font-weight:600;margin:0}
 input[type=search]{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid var(--fuge);background:var(--lack);color:var(--text);font:16px var(--font);-webkit-user-select:text;user-select:text}
 .main{background:var(--messing);color:var(--ebenholz);border-color:var(--messing);font-weight:600}
 select{width:100%;appearance:none;-webkit-appearance:none;padding-right:36px;background:var(--lack) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A89A88' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 14px center}
-.seg{display:flex;background:var(--lack);border:1px solid var(--fuge);border-radius:12px;padding:3px}
+.seg{display:flex;background:var(--lack);border-radius:12px;padding:3px}
 .seg button{flex:1;border:0;background:none;border-radius:9px;padding:8px 6px}
 .seg button[aria-pressed=true]{background:var(--elfenbein);color:var(--ebenholz);font-weight:600}
 .check{display:flex;align-items:center;gap:10px;padding:4px 0}
@@ -88,13 +105,13 @@ input[type=range]{width:100%;accent-color:var(--messing)}
 .sub{display:flex;align-items:center;justify-content:space-between;margin:22px 0 4px}
 .note{color:var(--leise);font-size:14px;margin:10px 0}
 .note a{color:var(--messing)}
-details{margin-top:18px;border-top:1px solid var(--fuge);padding-top:12px}
-summary{cursor:pointer;font-weight:600}
+details{margin-top:18px}
+summary{cursor:pointer;font-weight:600;padding:8px 0;color:var(--leise)}
+details[open] summary{color:var(--text)}
 ol{padding-left:20px;margin:8px 0;color:var(--leise);font-size:14px}
 ol li{margin:6px 0}
-.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.stats3 div{background:var(--lack);border-radius:12px;padding:10px 12px}
-.stats3 b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 4px}
+.stats3 b{display:block;font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
 .stats3 span{color:var(--leise);font-size:13px}
 .prog>div{padding:12px 0;border-bottom:1px solid var(--fuge)}
 .prog p{margin:3px 0 0;color:var(--leise);font-size:14px}
@@ -125,8 +142,8 @@ ol li{margin:6px 0}
     <span class="t"><span id="title">Demo</span><small>Songs</small></span>
   </button>
   <button id="restart" class="icon" aria-label="Von vorn"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
-  <button id="progBtn" class="icon" aria-label="Fortschritt"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
-  <button id="setBtn" class="icon" aria-label="Einstellungen"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+  <button id="setBtn" class="icon" aria-label="Üben"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+  <button id="moreBtn" class="icon" aria-label="Mehr"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></button>
   <button id="play" aria-label="Start"><svg id="playIco" viewBox="0 0 24 24"></svg><span id="playLbl">Start</span></button>
 </header>
 <div id="meter"><div id="band" hidden></div><div id="fill"></div></div>
@@ -169,47 +186,74 @@ ol li{margin:6px 0}
     <input type="hidden" id="hand" value="R">
   </div>
   <div class="field">
+    <div class="lbl"><span>Tempo</span><span id="spdv">60 %</span></div>
+    <input type="range" id="spd" min="20" max="150" value="60" aria-label="Tempo">
+  </div>
+  <div class="field">
     <div class="lbl">Ablauf</div>
     <div class="seg" id="modeSeg"><button data-v="wait" aria-pressed="true">Wartet auf mich</button><button data-v="beat" aria-pressed="false">Im Takt</button></div>
-    <p class="note" id="modeNote"></p>
-    <label class="check"><input type="checkbox" id="metro" checked> Metronom im Takt-Modus</label>
+    <label class="switch" id="metroRow" hidden><span>Metronom</span><input type="checkbox" id="metro" checked></label>
   </div>
   <div class="field">
-    <div class="lbl"><span>Abschnitt wiederholen</span><span id="loopv">Takt 1–4</span></div>
-    <label class="check"><input type="checkbox" id="loopOn"> Nur diesen Abschnitt in Schleife üben</label>
-    <div class="rng"><span>Von</span><input type="range" id="loopA" min="1" max="1" value="1"></div>
-    <div class="rng"><span>Bis</span><input type="range" id="loopB" min="1" max="1" value="1"></div>
-    <button id="loopHere" style="width:100%">4 Takte ab der aktuellen Stelle</button>
+    <label class="switch"><span>Abschnitt wiederholen</span><input type="checkbox" id="loopOn"></label>
+    <div id="loopBox" hidden>
+      <div class="lbl"><span id="loopv">Takt 1 bis 4</span></div>
+      <div class="rng"><span>Von</span><input type="range" id="loopA" min="1" max="1" value="1" aria-label="Abschnitt von Takt"></div>
+      <div class="rng"><span>Bis</span><input type="range" id="loopB" min="1" max="1" value="1" aria-label="Abschnitt bis Takt"></div>
+    </div>
   </div>
-  <label class="check"><input type="checkbox" id="simp"> Bei Akkorden nur die Melodienote</label>
-  <div class="field">
-    <div class="lbl"><span>Tempo</span><span id="spdv">60 %</span></div>
-    <input type="range" id="spd" min="20" max="150" value="60">
-  </div>
+  <details>
+    <summary>Weitere Optionen</summary>
+    <label class="switch"><span>Bei Akkorden nur die Melodienote</span><input type="checkbox" id="simp"></label>
+    <div class="field" id="partsField" hidden>
+      <div class="lbl">Wer spielt welche Stimme</div>
+      <div id="parts" class="list parts"></div>
+    </div>
+    <button id="hear" class="wide">Aktuelle Noten anhören</button>
+  </details>
+</section>
+
+<section class="sheet" id="sheetMore" aria-label="Mehr">
+  <div class="grab"></div>
+  <div class="head"><h2>Mehr</h2><button class="x" data-close>Fertig</button></div>
+  <h3>Dein Fortschritt</h3>
+  <div id="progress"></div>
+
+  <h3>Spielen und Klang</h3>
   <div class="field">
     <div class="lbl">Wie spielst du?</div>
-    <select id="inp"><option value="midi">E-Piano per MIDI-Kabel</option><option value="mic">Echtes Klavier über Mikrofon</option><option value="keys">Mac-Tastatur</option><option value="touch">Auf dem Bildschirm tippen</option></select>
-  </div>
-  <div class="field" id="partsField" hidden>
-    <div class="lbl">Spuren im Song</div>
-    <div id="parts" class="list parts"></div>
-    <p class="note">Bestimmt, welche Stimme welche Hand spielt. Begleitung wie Streicher oder Bass kannst du weglassen.</p>
+    <select id="inp" aria-label="Wie spielst du?"><option value="midi">E-Piano per MIDI-Kabel</option><option value="mic">Echtes Klavier über Mikrofon</option><option value="keys">Mac-Tastatur</option><option value="touch">Auf dem Bildschirm tippen</option></select>
   </div>
   <div class="field">
     <div class="lbl">Klang der App</div>
-    <select id="snd"><option value="grand">Konzertflügel</option><option value="bright">Klavier, hell</option><option value="epiano">E-Piano</option><option value="custom">Eigene Samples</option><option value="synth">Einfacher Synth (offline)</option></select>
-    <p class="note">Eigene Samples: Audiodateien mit dem Ton im Namen, z. B. C4.mp3, Fs4.wav, Bb3.m4a. Fehlende Töne werden aus dem nächsten Sample umgerechnet.
-    <label class="btn" for="sampleFile" style="display:table;margin-top:10px">Samples laden</label></p>
-    <input type="file" id="sampleFile" accept="audio/*" multiple hidden>
+    <select id="snd" aria-label="Klang der App"><option value="grand">Konzertflügel</option><option value="bright">Klavier, hell</option><option value="epiano">E-Piano</option><option value="custom">Eigene Samples</option><option value="synth">Einfacher Synth (offline)</option></select>
+    <div id="sampleRow" hidden>
+      <p class="note">Audiodateien mit dem Ton im Namen, z. B. C4.mp3, Fs4.wav oder Bb3.m4a. Fehlende Töne rechnet die App aus dem nächsten Sample um.</p>
+      <label class="btn" for="sampleFile">Samples laden</label>
+      <input type="file" id="sampleFile" accept="audio/*" multiple hidden>
+    </div>
   </div>
-  <button id="hear" style="width:100%">Aktuelle Noten anhören</button>
-  <p class="credit">Klänge: Salamander Grand Piano von Alexander Holm (CC BY 3.0), FluidR3 GM von Frank Wen (CC BY 3.0) über midi-js-soundfonts. Songsuche: BitMidi.</p>
-</section>
 
-<section class="sheet" id="sheetProg" aria-label="Fortschritt">
-  <div class="grab"></div>
-  <div class="head"><h2>Fortschritt</h2><button class="x" data-close>Fertig</button></div>
-  <div id="progress"></div>
+  <div id="syncGrp" hidden>
+    <h3>Auf allen Geräten</h3>
+    <div id="syncOff">
+      <p class="note">Songs, Fortschritt und Einstellungen auf Mac und iPhone gleich halten.</p>
+      <div class="row"><button class="main" id="syncNew">Sync einschalten</button><button id="syncJoin">Ich habe einen Code</button></div>
+      <div class="row" id="joinRow" hidden><input type="text" id="codeIn" placeholder="Code vom anderen Gerät" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Sync-Code"><button class="main" id="codeGo">Verbinden</button></div>
+    </div>
+    <div id="syncOnBox" hidden>
+      <div class="code"><span id="codeTxt"></span><button id="codeCopy">Kopieren</button></div>
+      <p class="note" id="syncStat"></p>
+      <div class="row"><button id="syncBtn">Jetzt abgleichen</button><button id="syncOffBtn">Trennen</button></div>
+    </div>
+  </div>
+
+  <h3>Backup</h3>
+  <p class="note">Alle Songs und der Fortschritt als eine Datei, zum Aufheben oder für ein anderes Gerät.</p>
+  <div class="row"><button id="bakOut">Backup sichern</button><label class="btn" for="bakIn">Backup laden</label></div>
+  <input type="file" id="bakIn" accept=".json,application/json" hidden>
+
+  <p class="credit">Klänge: Salamander Grand Piano von Alexander Holm (CC BY 3.0), FluidR3 GM von Frank Wen (CC BY 3.0) über midi-js-soundfonts. Songsuche: BitMidi.</p>
 </section>
 
 <script>
@@ -310,7 +354,7 @@ let partCfg={}; // eigene Wahl je Stimme, pro Song gespeichert
 const partModes=()=>Object.assign(autoHands(songNotes.parts||[]),partCfg);
 function assignHands(){const m=partModes();for(const n of songNotes){const v=m[n.key]||'S';n.h=v==='X'?null:v==='S'?(n.p>=SPLIT?'R':'L'):v;}}
 function loadPartCfg(){try{partCfg=JSON.parse(localStorage.getItem('pt_parts')||'{}')[songName]||{};}catch(e){partCfg={};}}
-function savePartCfg(){try{const all=JSON.parse(localStorage.getItem('pt_parts')||'{}');all[songName]=partCfg;localStorage.setItem('pt_parts',JSON.stringify(all));}catch(e){}}
+function savePartCfg(){partCfg._t=Date.now();try{const all=JSON.parse(localStorage.getItem('pt_parts')||'{}');all[songName]=partCfg;localStorage.setItem('pt_parts',JSON.stringify(all));}catch(e){}scheduleSync();}
 
 /* ---------- Modus, Abschnitt, Takt ---------- */
 let mode='wait',metro=true,loopOn=false,loopA=1,loopB=4,reps=0,beats=[],maxBar=1,loopEndT=null,nextBeat=0,devs=[],judgeFx=null;
@@ -372,7 +416,7 @@ function logSession(finished){
   const l=getLog();
   l.push({d:new Date().toISOString(),song:songName,hand:sessHand,spd:sessSpd,hits,misses,steps:steps.length,fin:!!finished,sec:Math.round(secs),mode});
   try{localStorage.setItem(LOGKEY,JSON.stringify(l.slice(-500)));}catch(e){} // Speicher voll/gesperrt: Üben geht trotzdem weiter
-  hits=0;misses=0;secs=0;
+  hits=0;misses=0;secs=0;scheduleSync();
 }
 // Lokales Datum statt UTC, sonst zählt Üben nach Mitternacht (MEZ) noch zum Vortag
 const ymd=t=>t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
@@ -601,7 +645,7 @@ const DB=(()=>{let op;
     t.oncomplete=()=>res(q.result);t.onerror=()=>rej(t.error);});};
   return {all:st=>run(st,'readonly',s=>s.getAll()),put:(st,v)=>run(st,'readwrite',s=>s.put(v)),del:(st,k)=>run(st,'readwrite',s=>s.delete(k))};
 })();
-async function saveSong(name,data){try{await DB.put('songs',{id:name,name,data,played:Date.now()});}catch(e){}}
+async function saveSong(name,data){try{await DB.put('songs',{id:name,name,data,played:Date.now()});}catch(e){}scheduleSync();}
 async function renderLib(){
   const el=$('#lib');let l=[];try{l=await DB.all('songs');}catch(e){}
   el.textContent='';
@@ -612,7 +656,7 @@ async function renderLib(){
     const sh=document.createElement('button');sh.className='mini';sh.textContent='Teilen';
     sh.onclick=e=>{e.stopPropagation();shareSong(s);};
     const del=document.createElement('button');del.className='mini';del.textContent='Löschen';
-    del.onclick=async e=>{e.stopPropagation();if(!confirm('„'+s.name+'“ aus Meine Songs löschen?'))return;try{await DB.del('songs',s.id);}catch(x){}renderLib();};
+    del.onclick=async e=>{e.stopPropagation();if(!confirm('„'+s.name+'“ aus Meine Songs löschen?'))return;try{await DB.del('songs',s.id);}catch(x){}tomb(s.name);renderLib();scheduleSync();};
     d.append(sh,del);
     d.onclick=()=>{try{setSong(parseMidi(s.data),s.name);saveSong(s.name,s.data);closeSheets();}catch(x){setMsg(s.name+': '+x.message);}};
     el.append(d);
@@ -624,6 +668,99 @@ function shareSong(s){
   if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:s.name}).catch(()=>{});return;}
   const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 }
+
+/* ---------- Auf allen Geräten: Backup-Datei und Sync per Code ---------- */
+// Supabase-Projekt (Einrichtung in supabase.sql). Der "anon public" Key ist dafür gemacht, öffentlich im Code
+// zu stehen: die Tabellen sind gesperrt, gelesen und geschrieben wird nur über Funktionen, die den Sync-Code prüfen.
+const SUPA={url:'',key:''};
+const ABC='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // ohne I, L, O, 0, 1 zum Abtippen
+const normCode=s=>s.toUpperCase().replace(/[^A-Z0-9]/g,'');
+const fmtCode=c=>c.match(/.{1,4}/g).join('-');
+let syncCode=null,syncBusy=false,syncAt=0,syncErr='',syncT=0;
+try{syncCode=localStorage.getItem('pt_sync');}catch(e){}
+function bufToB64(b){const u=new Uint8Array(b);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s);}
+function b64ToBuf(s){const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer;}
+// gelöschte Songs merken, damit sie auf den anderen Geräten auch verschwinden
+function getTomb(){try{return JSON.parse(localStorage.getItem('pt_tomb')||'{}');}catch(e){return {};}}
+function tomb(name){if(!syncCode)return;const t=getTomb();t[name]=Date.now();try{localStorage.setItem('pt_tomb',JSON.stringify(t));}catch(e){}}
+
+// Fortschritt, Einstellungen und Stimmen-Wahl; Eingabe und Klang bleiben pro Gerät
+function localState(){let parts={},prefs={};try{parts=JSON.parse(localStorage.getItem('pt_parts')||'{}');prefs=JSON.parse(localStorage.getItem(PREF)||'{}');}catch(e){}
+  const {inp,snd:_s,...shared}=prefs;return {log:getLog(),prefs:shared,parts};}
+function mergeState(a,b){
+  const seen=new Set(),log=[];for(const x of [...(a.log||[]),...(b.log||[])]){const k=x.d+'|'+x.song;if(!seen.has(k)){seen.add(k);log.push(x);}}
+  log.sort((x,y)=>x.d<y.d?-1:1);
+  const prefs=((b.prefs||{})._t||0)>((a.prefs||{})._t||0)?b.prefs:(a.prefs||{});
+  const parts=Object.assign({},b.parts||{});for(const k in a.parts||{})if(!parts[k]||(a.parts[k]._t||0)>=(parts[k]._t||0))parts[k]=a.parts[k];
+  return {log:log.slice(-500),prefs,parts};
+}
+function applyState(st){
+  try{localStorage.setItem(LOGKEY,JSON.stringify(st.log));localStorage.setItem('pt_parts',JSON.stringify(st.parts));
+    const cur=JSON.parse(localStorage.getItem(PREF)||'{}');
+    if((st.prefs._t||0)>(cur._t||0)){localStorage.setItem(PREF,JSON.stringify({...st.prefs,inp:cur.inp,snd:cur.snd}));if(!playing){loadPrefs();buildSteps();}}}catch(e){}
+  loadPartCfg();
+}
+// Songs aus einer anderen Quelle übernehmen, ohne vorhandene zu überschreiben
+async function addSongs(list){let n=0;const have=new Set((await DB.all('songs').catch(()=>[])).map(s=>s.name));
+  for(const s of list)if(!have.has(s.name)){try{await DB.put('songs',{id:s.name,name:s.name,data:b64ToBuf(s.data),played:s.played||0});n++;}catch(e){}}return n;}
+function refreshOpen(){if($('#sheetSongs').classList.contains('on'))renderLib();if($('#sheetMore').classList.contains('on')){showProgress();renderSync();}}
+
+/* Backup als eine Datei */
+async function backupOut(){
+  const songs=(await DB.all('songs').catch(()=>[])).map(s=>({name:s.name,played:s.played||0,data:bufToB64(s.data)}));
+  const f=new File([JSON.stringify({app:'piano-trainer',v:1,at:new Date().toISOString(),...localState(),songs})],'piano-trainer-backup-'+ymd(new Date())+'.json',{type:'application/json'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Piano Trainer Backup'}).catch(()=>{});return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+async function backupIn(file){
+  try{const b=JSON.parse(await file.text());if(b.app!=='piano-trainer')throw new Error('Keine Piano-Trainer-Datei');
+    applyState(mergeState(localState(),b));const n=await addSongs(b.songs||[]);
+    setMsg('Backup geladen: '+(n===1?'1 neuer Song':n+' neue Songs')+', Fortschritt zusammengeführt');refreshOpen();scheduleSync();}
+  catch(e){setMsg('Backup nicht lesbar: '+e.message);}
+}
+
+/* Sync über Supabase: lokal geht alles weiter, abgeglichen wird, sobald Netz da ist */
+async function rpc(fn,body){
+  const r=await fetch(SUPA.url+'/rest/v1/rpc/'+fn,{method:'POST',keepalive:fn==='pt_push'&&document.visibilityState==='hidden',
+    headers:{apikey:SUPA.key,Authorization:'Bearer '+SUPA.key,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const t=await r.text();if(!r.ok)throw new Error(r.status===404?'Sync ist auf dem Server noch nicht eingerichtet':'Server antwortet nicht ('+r.status+')');
+  return t?JSON.parse(t):null;
+}
+function scheduleSync(){if(!syncCode)return;clearTimeout(syncT);syncT=setTimeout(syncNow,3000);}
+async function syncNow(){
+  if(!SUPA.url||!syncCode||syncBusy)return;
+  if(!navigator.onLine){syncErr='Offline, wird nachgeholt';renderSync();return;}
+  syncBusy=true;clearTimeout(syncT);renderSync();
+  try{
+    const r=await rpc('pt_pull',{p_code:syncCode})||{};
+    applyState(mergeState(localState(),r.state||{}));
+    const local=await DB.all('songs').catch(()=>[]),L=new Map(local.map(s=>[s.name,s])),R=new Map((r.songs||[]).map(s=>[s.name,s])),tb=getTomb(),up=[],down=[];
+    for(const [n,rs] of R){const ls=L.get(n);
+      if(rs.deleted){if(ls&&(ls.played||0)>rs.t)up.push(ls);else if(ls)await DB.del('songs',n);}
+      else if(!ls){if(tb[n])up.push({name:n,deleted:true});else down.push(n);}
+      else if((ls.played||0)>(rs.played||0))up.push({name:n,played:ls.played});
+      else if((rs.played||0)>(ls.played||0))await DB.put('songs',{...ls,played:rs.played});
+    }
+    for(const [n,ls] of L)if(!R.has(n))up.push(ls);
+    for(let i=0;i<down.length;i+=20){const got=await rpc('pt_get',{p_code:syncCode,p_names:down.slice(i,i+20)})||[];
+      for(const s of got)await DB.put('songs',{id:s.name,name:s.name,data:b64ToBuf(s.data),played:s.played||0});}
+    const ups=up.map(s=>s.deleted?{name:s.name,deleted:true}:s.data?{name:s.name,played:s.played||0,data:bufToB64(s.data)}:{name:s.name,played:s.played||0});
+    const st=localState();
+    if(!ups.length)await rpc('pt_push',{p_code:syncCode,p_state:st,p_songs:[]});
+    for(let i=0;i<ups.length;i+=10)await rpc('pt_push',{p_code:syncCode,p_state:i?null:st,p_songs:ups.slice(i,i+10)});
+    try{localStorage.removeItem('pt_tomb');}catch(e){}
+    syncAt=Date.now();syncErr='';if(down.length||ups.length)refreshOpen();
+  }catch(e){syncErr=e.message||'Abgleich fehlgeschlagen';}
+  syncBusy=false;renderSync();
+}
+function renderSync(){
+  $('#syncGrp').hidden=!SUPA.url;if(!SUPA.url)return;
+  $('#syncOff').hidden=!!syncCode;$('#syncOnBox').hidden=!syncCode;if(!syncCode)return;
+  $('#codeTxt').textContent=fmtCode(syncCode);
+  $('#syncStat').textContent=syncBusy?'Gleiche ab …':syncErr?syncErr+'.':
+    (syncAt?'Abgeglichen um '+new Date(syncAt).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+'. ':'')+'Auf dem anderen Gerät unter Mehr diesen Code eingeben.';
+}
+function setCode(c){syncCode=c;try{c?localStorage.setItem('pt_sync',c):localStorage.removeItem('pt_sync');}catch(e){}syncAt=0;syncErr='';renderSync();}
 
 /* Suche */
 async function search(){
@@ -776,13 +913,11 @@ function updStatus(t){
 }
 function loopUI(){
   const a=$('#loopA'),b=$('#loopB');a.max=b.max=maxBar;loopA=Math.min(Math.max(1,loopA),maxBar);loopB=Math.min(Math.max(loopB,loopA),maxBar);
-  a.value=loopA;b.value=loopB;$('#loopOn').checked=loopOn;$('#loopv').textContent='Takt '+loopA+'–'+loopB+' von '+maxBar;
+  a.value=loopA;b.value=loopB;$('#loopOn').checked=loopOn;$('#loopBox').hidden=!loopOn;$('#loopv').textContent='Takt '+loopA+' bis '+loopB+' von '+maxBar;
   const [i0,i1]=range(),band=$('#band');band.hidden=!loopOn||!steps.length;
   if(steps.length){band.style.left=100*i0/steps.length+'%';band.style.width=100*(i1-i0+1)/steps.length+'%';}
 }
-const MODE_NOTE={wait:'Der Song wartet, bis du die richtigen Tasten triffst. Gut, um die Töne zu lernen.',
-  beat:'Der Song läuft im Tempo weiter, mit einem Takt Vorzählen. Bewertet wird, ob du früh, genau oder spät spielst.'};
-function setMode(v){mode=v;document.querySelectorAll('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));$('#modeNote').textContent=MODE_NOTE[v];}
+function setMode(v){mode=v;document.querySelectorAll('#modeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));$('#metroRow').hidden=v!=='beat';}
 const ICO={play:'<path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/>',
   pause:'<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/>'};
 function playLbl(t){$('#playLbl').textContent=t;$('#playIco').innerHTML=t==='Pause'?ICO.pause:ICO.play;$('#play').setAttribute('aria-label',t);}
@@ -791,7 +926,7 @@ function closeSheets(){document.querySelectorAll('.sheet.on').forEach(s=>s.class
 function rotHint(){let off=false;try{off=localStorage.getItem('pt_rot')==='1';}catch(e){}
   $('#rotate').hidden=off||!(innerHeight>innerWidth&&innerWidth<600&&whites.length>=15);}
 const PREF='pt_prefs';
-function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({hand:$('#hand').value,simp:$('#simp').checked,spd:$('#spd').value,inp:$('#inp').value,snd,mode,metro}));}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({hand:$('#hand').value,simp:$('#simp').checked,spd:$('#spd').value,inp:$('#inp').value,snd,mode,metro,_t:Date.now()}));}catch(e){}scheduleSync();}
 function setHand(v){$('#hand').value=v;document.querySelectorAll('#handSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));}
 function loadPrefs(){try{const p=JSON.parse(localStorage.getItem(PREF)||'{}');
   if(p.hand)setHand(p.hand);if(p.simp)$('#simp').checked=true;if(p.spd){$('#spd').value=p.spd;$('#spdv').textContent=p.spd+' %';}
@@ -818,24 +953,24 @@ document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{setMode(b
 $('#metro').onchange=()=>{metro=$('#metro').checked;savePrefs();};
 $('#loopA').oninput=()=>{loopA=+$('#loopA').value;if(loopB<loopA)loopB=loopA;loopUI();if(loopOn)restart();};
 $('#loopB').oninput=()=>{loopB=+$('#loopB').value;if(loopA>loopB)loopA=loopB;loopUI();if(loopOn)restart();};
-$('#loopOn').onchange=()=>{loopOn=$('#loopOn').checked;loopUI();restart();};
-$('#loopHere').onclick=()=>{const b=(steps[Math.min(idx,steps.length-1)]||{bar:1}).bar;loopA=b;loopB=Math.min(maxBar,b+3);loopOn=true;loopUI();restart();setMsg('Takt '+loopA+'–'+loopB+' in Schleife');};
+$('#loopOn').onchange=()=>{loopOn=$('#loopOn').checked;if(loopOn){const b=(steps[Math.min(idx,steps.length-1)]||{bar:1}).bar;loopA=b;loopB=Math.min(maxBar,b+3);}loopUI();restart();};
 $('#restart').onclick=restart;
 $('#songsBtn').onclick=()=>{renderLib();openSheet('#sheetSongs');};
 $('#setBtn').onclick=()=>openSheet('#sheetSet');
-$('#progBtn').onclick=()=>{showProgress();openSheet('#sheetProg');};
+$('#moreBtn').onclick=()=>{showProgress();renderSync();openSheet('#sheetMore');};
 $('#scrim').onclick=closeSheets;
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheets);
 $('#rotX').onclick=()=>{try{localStorage.setItem('pt_rot','1');}catch(e){}$('#rotate').hidden=true;};
 window.addEventListener('pagehide',()=>logSession(false));
 // Als iPhone-App (Home-Bildschirm) kommt beim Wegwischen oft kein pagehide mehr, nur visibilitychange
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')logSession(false);else if(playing)keepAwake(true);});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){logSession(false);syncNow();}else{if(playing)keepAwake(true);syncNow();}});
+window.addEventListener('online',()=>syncNow());
 document.querySelectorAll('#handSeg button').forEach(b=>b.onclick=()=>{setHand(b.dataset.v);buildSteps();savePrefs();});
 $('#simp').onchange=()=>{buildSteps();savePrefs();};
 $('#spd').oninput=()=>{const v=+$('#spd').value;$('#spdv').textContent=v+' %';sessSpd=hits||misses?Math.min(sessSpd,v):v;};
 $('#spd').onchange=savePrefs;
 $('#hear').onclick=()=>{ctx();if(idx<steps.length)steps[idx].notes.forEach(n=>tone(n.p,1.4));};
-$('#snd').onchange=()=>{snd=$('#snd').value;savePrefs();ctx();
+$('#snd').onchange=()=>{snd=$('#snd').value;$('#sampleRow').hidden=snd!=='custom';savePrefs();ctx();
   if(snd==='custom'&&!bufs.custom)setMsg('Noch keine eigenen Samples. Tippe auf „Samples laden“.');else{preloadSound();if(PACKS[snd].url)setMsg('Klang wird geladen und danach offline gespeichert.');}};
 $('#file').onchange=async e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;let ok=0,first=null;
   for(const f of fs){try{const b=await f.arrayBuffer(),n=parseMidi(b),name=f.name.replace(/\.midi?$/i,'');await saveSong(name,b);ok++;if(!first)first={n,name};}
@@ -851,10 +986,23 @@ $('#sampleFile').onchange=async e=>{const fs=[...e.target.files];e.target.value=
   else setMsg('Keine Datei erkannt. Der Ton muss im Namen stehen, z. B. C4.mp3 oder Fs3.wav.');
 };
 $('#inp').onchange=async()=>{const v=$('#inp').value;inpMode=v;savePrefs();if(v==='keys')setMsg('Untere Buchstabenreihe = weiße Tasten, obere = schwarze. Das Fenster folgt dem Song, ←/→ verschiebt es, Leertaste = Start/Pause.');if(v==='midi')setMsg(await initMidi());if(v==='mic')setMsg(await initMic());if(v==='touch')setMsg('Tippe unten auf die Tasten.');};
+$('#syncNew').onclick=()=>{const r=crypto.getRandomValues(new Uint8Array(24));setCode([...r].map(x=>ABC[x%ABC.length]).join(''));syncNow();};
+$('#syncJoin').onclick=()=>{$('#joinRow').hidden=false;$('#codeIn').focus();};
+$('#codeGo').onclick=async()=>{const c=normCode($('#codeIn').value);
+  if(c.length!==24){setMsg('Der Code hat 24 Zeichen. Am besten auf dem anderen Gerät kopieren und hier einfügen.');return;}
+  try{const r=await rpc('pt_pull',{p_code:c});if(!r||!r.state){setMsg('Unter diesem Code ist nichts gespeichert. Bitte die Schreibweise prüfen.');return;}
+    setCode(c);$('#codeIn').value='';$('#joinRow').hidden=true;syncNow();}
+  catch(e){setMsg(e.message);}};
+$('#codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#codeGo').click();});
+$('#codeCopy').onclick=()=>{navigator.clipboard.writeText(fmtCode(syncCode)).then(()=>setMsg('Code kopiert'),()=>setMsg('Kopieren ging nicht. Code antippen, markieren und kopieren.'));};
+$('#syncBtn').onclick=()=>syncNow();
+$('#syncOffBtn').onclick=()=>{if(confirm('Dieses Gerät vom Sync trennen? Songs und Fortschritt bleiben hier gespeichert.'))setCode(null);};
+$('#bakOut').onclick=backupOut;
+$('#bakIn').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)backupIn(f);};
 window.addEventListener('resize',resize);
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 (async()=>{
-  setMode('wait');loadPrefs();
+  setMode('wait');loadPrefs();$('#sampleRow').hidden=snd!=='custom';
   if(!navigator.requestMIDIAccess&&$('#inp').value==='midi'){$('#inp').value='mic';}
   inpMode=$('#inp').value;
   songNotes=demoSong();songName='Ode an die Freude';buildSteps();resize();
@@ -863,6 +1011,7 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.
   let last=null;try{const l=await DB.all('songs');if(l.length)last=l.sort((a,b)=>(b.played||0)-(a.played||0))[0];}catch(e){}
   if(last){try{setSong(parseMidi(last.data),last.name);}catch(e){}}
   if(inpMode==='midi')setMsg(await initMidi());else if(!last)setMsg('Tippe oben auf den Songtitel, um einen Song zu suchen.');
+  renderSync();syncNow();
 })();
 </script>
 </body>
