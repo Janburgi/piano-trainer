@@ -42,7 +42,7 @@ canvas{flex:1;width:100%;min-height:0;touch-action:none;display:block}
   </div>
   <div class="row more">
     <label>Eingabe
-      <select id="inp"><option value="midi">E-Piano per MIDI</option><option value="mic">Mikrofon</option><option value="touch">Nur Touch</option></select>
+      <select id="inp"><option value="midi">E-Piano per MIDI</option><option value="mic">Mikrofon</option><option value="keys">Mac-Tastatur</option><option value="touch">Nur Touch</option></select>
     </label>
     <button id="hear">Hör rein</button>
     <label><input type="file" id="file" accept=".mid,.midi" style="max-width:150px"></label>
@@ -138,7 +138,7 @@ function buildSteps(){
   while(hi-lo<35){if(lo>=24)lo-=12;if(hi-lo<35)hi+=12;}
   layout();restart();
 }
-function restart(){if(playing||hits>=3)logSession(false);idx=0;pos=steps.length?Math.max(0,steps[0].t-1.5):0;got=new Set();hits=0;misses=0;lastPitches=new Set();playing=false;$('#play').textContent='Start';updStatus();}
+function restart(){if(playing||hits>=3)logSession(false);kbBase=-100;idx=0;pos=steps.length?Math.max(0,steps[0].t-1.5):0;got=new Set();hits=0;misses=0;lastPitches=new Set();playing=false;$('#play').textContent='Start';updStatus();}
 
 
 /* ---------- Fortschritt (bleibt lokal auf dem Gerät) ---------- */
@@ -182,6 +182,36 @@ function press(p,now=performance.now()){
   }else misses++;
 }
 function speed(){return +$('#spd').value/100;}
+
+
+/* ---------- Mac-Tastatur als Klavier ---------- */
+/* Gleiche Geometrie wie am Klavier: untere Reihe = weiße Tasten, obere Reihe = schwarze Tasten,
+   an genau den Stellen, wo sie am Klavier sitzen. Das 18-Tasten-Fenster springt automatisch zur
+   Handposition, die der Song gerade braucht (wie eine Hand, die über die Tasten wandert). */
+const KB=[['KeyA',0],['KeyW',1],['KeyS',2],['KeyE',3],['KeyD',4],['KeyF',5],['KeyT',6],['KeyG',7],['KeyY',8],['KeyH',9],['KeyU',10],['KeyJ',11],['KeyK',12],['KeyO',13],['KeyL',14],['KeyP',15],['Semicolon',16],['Quote',17]];
+const KBMAP=Object.fromEntries(KB),KBSPAN=17;
+let kbBase=-100,inpMode='midi';
+const DE=(navigator.language||'').startsWith('de');
+function kbLabel(off){const c=KB.find(k=>k[1]===off)[0];
+  if(c==='Semicolon')return DE?'Ö':';';if(c==='Quote')return DE?'Ä':"'";if(c==='KeyY')return DE?'Z':'Y';return c.slice(3);}
+function followWindow(){
+  if(idx>=steps.length)return;
+  const cur=steps[idx].notes.map(n=>n.p);
+  if(cur.every(p=>p>=kbBase&&p<=kbBase+KBSPAN))return;
+  let ps=cur.slice();for(let i=1;i<=3&&idx+i<steps.length;i++)ps.push(...steps[idx+i].notes.map(n=>n.p));
+  let b=Math.floor(Math.min(...ps)/12)*12;
+  if(Math.max(...ps)>b+KBSPAN)b=Math.floor(Math.min(...cur)/12)*12;
+  kbBase=b;
+}
+window.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.metaKey||e.ctrlKey||e.altKey)return;
+  if(e.code==='Space'){e.preventDefault();$('#play').click();return;}
+  if(inpMode!=='keys')return;
+  if(e.code==='ArrowLeft'){kbBase-=12;e.preventDefault();return;}
+  if(e.code==='ArrowRight'){kbBase+=12;e.preventDefault();return;}
+  if(e.repeat||!(e.code in KBMAP))return;
+  e.preventDefault();const p=kbBase+KBMAP[e.code];tone(p);press(p);
+});
 
 /* MIDI */
 let midiAcc=null;
@@ -294,11 +324,24 @@ function draw(now){
     if(p%12===0){g.fillStyle='#888';g.font='10px sans-serif';g.textAlign='center';g.fillText('C'+(Math.floor(p/12)-1),r.x+r.w/2,H-4);}}
   for(let p=lo;p<=hi;p++)if(isBlack(p)){const r=keyRect(p);
     g.fillStyle=col(p)||(exp.has(p)?'#c9a43a':'#111');g.fillRect(r.x,fh,r.w,kh*0.62);}
+  if(inpMode==='keys'){
+    const a=Math.max(kbBase,lo),b=Math.min(kbBase+KBSPAN,hi);
+    if(a<=b){
+      const xl=keyRect(a).x,xr=keyRect(b).x+keyRect(b).w;
+      g.fillStyle='rgba(10,10,10,0.55)';g.fillRect(0,fh,xl,kh);g.fillRect(xr,fh,W-xr,kh);
+      g.fillStyle='#C2A985';g.fillRect(xl,fh+kh-3,xr-xl,3);
+      g.textAlign='center';g.font='600 '+Math.max(10,Math.min(16,ww*0.5))+'px sans-serif';
+      for(let p=a;p<=b;p++){const r=keyRect(p);
+        g.fillStyle=r.black?'#C2A985':'#0A0A0A';
+        g.fillText(kbLabel(p-kbBase),r.x+r.w/2,r.black?fh+kh*0.42:fh+kh-14);}
+    }
+  }
 }
 function loop(now){
   const dt=Math.min(0.1,(now-(loop.l||now))/1000);loop.l=now;
   if(playing)secs+=dt;
   if(playing&&idx<steps.length){const tg=steps[idx].t;if(pos<tg)pos=Math.min(tg,pos+dt*speed());}
+  if(inpMode==='keys')followWindow();
   micScan(now);draw(now);requestAnimationFrame(loop);
 }
 
@@ -323,10 +366,11 @@ $('#hand').onchange=buildSteps;$('#simp').onchange=buildSteps;
 $('#spd').oninput=()=>$('#spdv').textContent=$('#spd').value+'%';
 $('#hear').onclick=()=>{ctx();if(idx<steps.length)steps[idx].notes.forEach(n=>tone(n.p));};
 $('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{setSong(parseMidi(await f.arrayBuffer()),f.name.replace(/\.midi?$/i,''));$('#panel').classList.add('hide');}catch(x){setMsg(x.message);}};
-$('#inp').onchange=async()=>{const v=$('#inp').value;if(v==='midi')setMsg(await initMidi());if(v==='mic')setMsg(await initMic());if(v==='touch')setMsg('Nur Touch: auf die Tasten tippen.');};
+$('#inp').onchange=async()=>{const v=$('#inp').value;inpMode=v;if(v==='keys')setMsg('Tastatur: untere Reihe = weiße Tasten, obere Reihe = schwarze. Das Fenster folgt dem Song, ←/→ verschiebt es. Space = Start/Pause.');if(v==='midi')setMsg(await initMidi());if(v==='mic')setMsg(await initMic());if(v==='touch')setMsg('Nur Touch: auf die Tasten tippen.');};
 window.addEventListener('resize',resize);
 (async()=>{
   if(!navigator.requestMIDIAccess){$('#inp').value='mic';}
+  inpMode=$('#inp').value;
   songNotes=demoSong();songName='Demo: Ode an die Freude';buildSteps();resize();
   requestAnimationFrame(loop);
   if($('#inp').value==='midi')setMsg(await initMidi());else setMsg('Suche oben nach einem Song. Für Mikrofon-Modus „Eingabe“ im Menü antippen.');
