@@ -32,14 +32,17 @@ select{font:15px var(--font);color:var(--text);background:var(--lack);border:1px
 button:active,.btn:active{filter:brightness(1.15)}
 :focus-visible{outline:2px solid var(--messing);outline-offset:2px}
 
-#bar{display:flex;align-items:center;gap:6px;padding:8px 10px;min-height:56px}
+/* Kopfzeile: Song links, rechts zwei Gruppen mit je einer Tonstufe; Tippflächen 44 px, 10 px Abstand */
+#bar{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 6px;min-height:62px}
+.pill{display:flex;align-items:center;gap:2px;padding:2px;background:var(--lack2);border-radius:24px;flex:none}
 #songsBtn{display:flex;align-items:center;gap:10px;flex:1;min-width:0;background:none;border:0;padding:6px 8px;text-align:left}
 #songsBtn .t{display:flex;flex-direction:column;min-width:0}
 #title{font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#songsBtn small{color:var(--leise);font-size:12px}
-.icon{width:42px;height:42px;padding:0;display:grid;place-items:center;background:var(--lack2)}
-#bar .icon{background:none}
-#play{height:42px;padding:0 18px 0 14px;display:flex;align-items:center;gap:6px;background:var(--messing);color:var(--ebenholz);border:0;border-radius:21px;font-weight:600}
+#songsBtn small{color:var(--leise);font-size:12px;display:flex;align-items:center;gap:2px}
+.chev{width:14px;height:14px}
+.icon{width:44px;height:44px;padding:0;display:grid;place-items:center;background:var(--lack2)}
+#bar .icon{background:none;border-radius:22px}
+#play{height:44px;min-width:44px;padding:0 18px 0 14px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--messing);color:var(--ebenholz);border:0;border-radius:22px;font-weight:600}
 #meter{height:3px;flex:none;position:relative}
 #fill{position:relative;height:100%;width:0;background:var(--messing);transition:width .25s}
 #band{position:absolute;top:0;bottom:0;background:rgba(201,163,90,.3)}
@@ -119,16 +122,15 @@ ol li{margin:6px 0}
 
 /* Handy hochkant: Start nur als Symbol, damit der Songtitel Platz hat */
 @media (max-width:430px){
-  #bar{gap:5px;padding:8px 8px}
-  #songsBtn{padding:6px 4px;gap:8px}
-  .icon{width:40px;height:40px}
-  #play{width:48px;height:48px;padding:0;justify-content:center;border-radius:24px}
+  #bar{gap:8px;padding:8px 10px 8px 4px}
+  #songsBtn{padding:6px 4px 6px 8px;gap:8px}
+  #songsBtn>svg{display:none}
+  #play{width:44px;padding:0}
   #playLbl{display:none}
 }
 /* Handy quer: Leiste schmaler, damit mehr Platz für Noten bleibt */
 @media (orientation:landscape) and (max-height:520px){
-  #bar{min-height:46px;padding:4px 10px}
-  .icon,#play{height:38px}.icon{width:38px}
+  #bar{min-height:52px;padding:4px 12px 4px 6px}
   #songsBtn small{display:none}
   .sheet{max-height:92dvh}
 }
@@ -139,12 +141,16 @@ ol li{margin:6px 0}
 <header id="bar">
   <button id="songsBtn" aria-label="Songs öffnen">
     <svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
-    <span class="t"><span id="title">Demo</span><small>Songs</small></span>
+    <span class="t"><span id="title">Demo</span><small>Songs <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></small></span>
   </button>
-  <button id="restart" class="icon" aria-label="Von vorn"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
-  <button id="setBtn" class="icon" aria-label="Üben"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
-  <button id="moreBtn" class="icon" aria-label="Mehr"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></button>
-  <button id="play" aria-label="Start"><svg id="playIco" viewBox="0 0 24 24"></svg><span id="playLbl">Start</span></button>
+  <div class="pill">
+    <button id="setBtn" class="icon" aria-label="Üben"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+    <button id="moreBtn" class="icon" aria-label="Mehr"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></svg></button>
+  </div>
+  <div class="pill">
+    <button id="restart" class="icon" aria-label="Von vorn"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+    <button id="play" aria-label="Start"><svg id="playIco" viewBox="0 0 24 24"></svg><span id="playLbl">Start</span></button>
+  </div>
 </header>
 <div id="meter"><div id="band" hidden></div><div id="fill"></div></div>
 <main id="stage">
@@ -822,6 +828,10 @@ function keyRect(p){return isBlack(p)?{x:(wIdx[p-1]+1)*ww-bw/2,w:bw,black:true}:
 function draw(now){
   g.clearRect(0,0,W,H);
   const fh=H-kh,pps=fh/LOOK;
+  // Leer: sagen warum und was hilft, statt nur 0/0 zu zeigen
+  if(!steps.length&&songNotes.length){const h=$('#hand').value;g.textAlign='center';g.fillStyle=C.label;g.font='600 16px '+FONT;
+    g.fillText(h==='B'?'In dieser Auswahl gibt es keine Noten.':'Für die '+(h==='L'?'linke':'rechte')+' Hand gibt es hier keine Noten.',W/2,fh*0.45);
+    g.font='15px '+FONT;g.fillText(h==='B'?'Unter Üben die Stimmen prüfen.':'Unter Üben die Hand wechseln.',W/2,fh*0.45+26);}
   // Bahnen, jede Oktave (C) etwas deutlicher
   // (nur zwischen den Tasten, keine Linie am Rand, sonst wirkt die Fläche wie ein Kasten)
   for(const p of whites){if(p===lo)continue;const r=keyRect(p);g.fillStyle=p%12===0?C.laneC:C.lane;g.fillRect(Math.round(r.x),0,1,fh);}
@@ -924,6 +934,24 @@ const ICO={play:'<path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/>
 function playLbl(t){$('#playLbl').textContent=t;$('#playIco').innerHTML=t==='Pause'?ICO.pause:ICO.play;$('#play').setAttribute('aria-label',t);}
 function openSheet(id){closeSheets();if(playing){playing=false;playLbl('Weiter');}$(id).classList.add('on');$('#scrim').classList.add('on');}
 function closeSheets(){document.querySelectorAll('.sheet.on').forEach(s=>s.classList.remove('on'));$('#scrim').classList.remove('on');}
+// Panels nach unten wegwischen: am Griff und an der Kopfzeile immer, im Inhalt nur, wenn er ganz oben steht
+document.querySelectorAll('.sheet').forEach(sh=>{
+  let y0=null,t0=0,dy=0,drag=false,fromHead=false;
+  const reset=()=>{sh.style.transition='';sh.style.transform='';$('#scrim').style.transition='';$('#scrim').style.opacity='';};
+  sh.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;fromHead=!!e.target.closest('.grab,.head');
+    if(!fromHead&&e.target.closest('input[type=range],input[type=text],input[type=search],select'))return;
+    y0=e.touches[0].clientY;t0=performance.now();dy=0;drag=false;},{passive:true});
+  sh.addEventListener('touchmove',e=>{if(y0===null)return;const d=e.touches[0].clientY-y0;
+    if(!drag){if(d>6&&(fromHead||sh.scrollTop<=0))drag=true;else if(d<-6||(!fromHead&&sh.scrollTop>0)){y0=null;return;}else return;}
+    dy=Math.max(0,d);if(e.cancelable)e.preventDefault();
+    sh.style.transition='none';sh.style.transform='translateY('+dy+'px)';
+    $('#scrim').style.transition='none';$('#scrim').style.opacity=String(Math.max(0,1-dy/(sh.offsetHeight||400)));},{passive:false});
+  const end=()=>{if(y0===null)return;y0=null;if(!drag){return;}drag=false;
+    const v=dy/Math.max(1,performance.now()-t0);
+    if(dy>Math.min(140,sh.offsetHeight*0.3)||v>0.6)closeSheets();
+    reset();}; // ohne Inline-Werte gleitet das Panel von der aktuellen Lage aus zu oder zurück
+  sh.addEventListener('touchend',end);sh.addEventListener('touchcancel',end);
+});
 function rotHint(){let off=false;try{off=localStorage.getItem('pt_rot')==='1';}catch(e){}
   $('#rotate').hidden=off||!(innerHeight>innerWidth&&innerWidth<600&&whites.length>=15);}
 const PREF='pt_prefs';
