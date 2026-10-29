@@ -670,9 +670,9 @@ function shareSong(s){
 }
 
 /* ---------- Auf allen Geräten: Backup-Datei und Sync per Code ---------- */
-// Supabase-Projekt (Einrichtung in supabase.sql). Der "anon public" Key ist dafür gemacht, öffentlich im Code
+// Supabase-Projekt (Einrichtung in supabase.sql). Der "publishable" Key ist dafür gemacht, öffentlich im Code
 // zu stehen: die Tabellen sind gesperrt, gelesen und geschrieben wird nur über Funktionen, die den Sync-Code prüfen.
-const SUPA={url:'',key:''};
+const SUPA={url:'https://kdzzqixxopvtbkvgxtsv.supabase.co',key:'sb_publishable_qibnMAYzmftb6syWz2WURg_tjOSEei3'};
 const ABC='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // ohne I, L, O, 0, 1 zum Abtippen
 const normCode=s=>s.toUpperCase().replace(/[^A-Z0-9]/g,'');
 const fmtCode=c=>c.match(/.{1,4}/g).join('-');
@@ -722,7 +722,8 @@ async function backupIn(file){
 /* Sync über Supabase: lokal geht alles weiter, abgeglichen wird, sobald Netz da ist */
 async function rpc(fn,body){
   const r=await fetch(SUPA.url+'/rest/v1/rpc/'+fn,{method:'POST',keepalive:fn==='pt_push'&&document.visibilityState==='hidden',
-    headers:{apikey:SUPA.key,Authorization:'Bearer '+SUPA.key,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    // neue Keys (sb_…) sind kein JWT und gehören nur in "apikey"; alte anon-Keys zusätzlich als Bearer
+    headers:{apikey:SUPA.key,...(SUPA.key.startsWith('sb_')?{}:{Authorization:'Bearer '+SUPA.key}),'Content-Type':'application/json'},body:JSON.stringify(body)});
   const t=await r.text();if(!r.ok)throw new Error(r.status===404?'Sync ist auf dem Server noch nicht eingerichtet':'Server antwortet nicht ('+r.status+')');
   return t?JSON.parse(t):null;
 }
