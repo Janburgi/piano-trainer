@@ -357,7 +357,10 @@ cv.addEventListener('pointerdown',e=>{
   if(hit!==null){tone(hit);press(hit);}
 });
 $('#go').onclick=search;$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')search();});
-$('#play').onclick=()=>{ctx();if(idx>=steps.length)restart();playing=!playing;$('#play').textContent=playing?'Pause':'Weiter';$('#panel').classList.add('hide');};
+$('#play').onclick=async()=>{ctx();
+  if(!steps.length){setMsg('Für diese Hand gibt es keine Noten. Hand wechseln.');return;}
+  if(inpMode==='mic'&&!micOn)setMsg(await initMic());
+  if(idx>=steps.length)restart();playing=!playing;$('#play').textContent=playing?'Pause':'Weiter';$('#panel').classList.add('hide');};
 $('#restart').onclick=restart;
 $('#prog').onclick=()=>{const e=$('#progress');if(e.style.display==='none'){showProgress();e.style.display='block';$('#panel').classList.remove('hide');}else e.style.display='none';};
 window.addEventListener('pagehide',()=>logSession(false));
